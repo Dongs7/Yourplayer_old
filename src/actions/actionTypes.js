@@ -1,0 +1,17 @@
+export const USER_LOGIN = 'USER_LOGIN'
+export const USER_TOKEN = 'USER_TOKEN'
+export const USER_LOGOUT = 'USER_LOGOUT'
+
+export const FETCH_LOADING = 'DATA_LOADING'
+export const FETCH_ERROR = 'FETCH_ERROR'
+export const FETCH_SUCCESS = 'FETCH_SUCCESS'
+export const RESET_DATA = 'RESET_DATA'
+export const FETCH_SONG = 'FETCH_SONG'
+
+export const CONTROL_FROM_ICON = 'CONTROL_FROM_ICON'
+export const FETCH_PLAYING_STATE = 'FETCH_PLAYING_STATE'
+
+export const FETCH_LIST_ID = 'FETCH_LIST_ID'
+export const LOAD_PLAYLIST = 'LOAD_PLAYLIST'
+
+export const SONG_REPEAT = 'SONG_REPEAT'
