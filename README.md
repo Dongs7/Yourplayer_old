@@ -30,7 +30,7 @@ Simple Music Player utilizing
 - ~~No duplicate in the playlist~~
 - button to show more results (pagetoken)
 - marquee for long text
-
+- close playlist sidemenu after selecting the song (mobile)
 # Update #1
 - add song in the playlist if the song is not in the list
 - seek currently playing song using slider bar
