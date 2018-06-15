@@ -129,8 +129,8 @@ class Player extends Component {
     if(this.props.repeatSelector.single){
       this._onPlay()
     }else if(this.props.repeatSelector.all){
-      let videoId = this._getNextSongVideoId()
-      this.props.fetchSelectedSong(videoId)
+      let videoInfo = this._getNextSongVideoId()
+      this.props.fetchSelectedSong(videoInfo.videoId, videoInfo.trimTitle)
     }else{
       this.props.controlPlayFromIcon("done")
     }
