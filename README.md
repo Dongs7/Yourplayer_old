@@ -36,3 +36,4 @@ Simple Music Player utilizing
 - seek currently playing song using slider bar
 - improved UI
 - 1.1 Fixed : unable to show track title when clicking prev, next skip button
+- 1.2 Fixed : unable to rotate tracks automatically when repeat-all is activated
