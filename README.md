@@ -27,7 +27,7 @@ Simple Music Player utilizing
 - Better IOS support
 - ~~Text styles for search results~~
 - Volume control, ~~slider bar control~~
-- ~~No duplicate in the playlist ~~
+- ~~No duplicate in the playlist
 - button to show more results (pagetoken)
 - marquee for long text
 
