@@ -167,28 +167,39 @@ class Player extends Component {
 
   // Get Next Song's ID from the playlist
   _getNextSongVideoId(){
-    let videoId = ''
+    let videoId = '', title = '', trimTitle = ''
+
     if(this.state.currentSongIdx + 1 < this.props.playlistResults.length){
       videoId = this.props.playlistResults[this.state.currentSongIdx + 1].snippet.resourceId.videoId
+      title = this.props.playlistResults[this.state.currentSongIdx + 1].snippet.title
+      trimTitle = title.replace(/\[.*?\]|《.*?》|@(.*)|\(.*?\)|\|(.*)|(\s?)MV(\s?)/g,"")
       this.setState({ currentSongIdx : this.state.currentSongIdx + 1 })
     }else{
       videoId = this.props.playlistResults[0].snippet.resourceId.videoId
+      title = this.props.playlistResults[0].snippet.title
+      trimTitle = title.replace(/\[.*?\]|《.*?》|@(.*)|\(.*?\)|\|(.*)|(\s?)MV(\s?)/g,"")
       this.setState({ currentSongIdx : 0})
     }
-    return videoId
+    return {videoId, trimTitle}
   }
 
   // Get Prev Song's ID from the playlist
   _getPrevSongVideoId(){
-    let videoId = ''
+    let videoId = '', title = '', trimTitle = ''
     if(this.state.currentSongIdx - 1 >= 0){
+      // return current track index - 1
       videoId = this.props.playlistResults[this.state.currentSongIdx - 1].snippet.resourceId.videoId
+      title = this.props.playlistResults[this.state.currentSongIdx - 1].snippet.title
+      trimTitle = title.replace(/\[.*?\]|《.*?》|@(.*)|\(.*?\)|\|(.*)|(\s?)MV(\s?)/g,"")
       this.setState({ currentSongIdx : this.state.currentSongIdx - 1 })
     }else{
+      // return last track if current track is the first track
       videoId = this.props.playlistResults[this.props.playlistResults.length - 1].snippet.resourceId.videoId
+      title = this.props.playlistResults[this.props.playlistResults.length - 1].snippet.title
+      trimTitle = title.replace(/\[.*?\]|《.*?》|@(.*)|\(.*?\)|\|(.*)|(\s?)MV(\s?)/g,"")
       this.setState({ currentSongIdx : this.props.playlistResults.length - 1})
     }
-    return videoId
+    return {videoId, trimTitle}
   }
 
   // Toggle 3 icon buttons using state.
@@ -218,13 +229,13 @@ class Player extends Component {
 
     if(this.props.playlistResults){
       if( this.props.playlistResults.length > 0) {
-        let videoId = ''
+        let videoInfo = {}
         if(direction === 'prev'){
-          videoId = this._getPrevSongVideoId()
+          videoInfo = this._getPrevSongVideoId()
         }else{
-          videoId = this._getNextSongVideoId()
+          videoInfo = this._getNextSongVideoId()
         }
-        this.props.fetchSelectedSong(videoId)
+        this.props.fetchSelectedSong(videoInfo.videoId, videoInfo.trimTitle)
       }else{
         console.log("no playlist available")
       }

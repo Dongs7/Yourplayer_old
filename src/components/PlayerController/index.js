@@ -106,50 +106,21 @@ const PlayerController = (props) => {
 
       <div className={classes.controlWrapper}>
 
-        {/* Album Wrapper */}
-        {/* <div className={classes.album}>
-          <img src={currentSongData.thumbnail ? currentSongData.thumbnail.url : NoImage}
-            alt="song_image"
-            style={{ width:100, height: '100%', display:'block'}} />
-        </div> */}
-
         {/* Controller Wrapper */}
         <div className={classes.playerControl}>
 
-          {/* Player Controller */}
-          {/* <div className={classes.test} style={{ flexDirection:'row', width:'80%', display:'flex', alignItems:'center'}}>
-            <ShuffleIcon className={classNames(classes.icons,classes.itemFlex)}/>
-
-            <SkipPrevIcon className={classNames(classes.icons,classes.itemFlex)} onClick={()=>changeTrack('prev') }/>
-            {
-              playState ?
-              <PauseIcon className={classNames(classes.icons,classes.itemFlex, classes.bigIcon)} onClick={()=>controlFromPlayer("pause")}/>
-              :
-              <PlayIcon className={classNames(classes.icons,classes.itemFlex, classes.bigIcon)} onClick={()=>controlFromPlayer("play")}/>
-            }
-            <SkipNextIcon className={classNames(classes.icons,classes.itemFlex)} onClick={()=>changeTrack('next') }/>
-            {
-              (currentRepeatStatus.norepeat || currentRepeatStatus.all) &&
-              <RepeatIcon className={classNames(classes.icons,classes.itemFlex, {[classes.repeatAll] : currentRepeatStatus.all})} onClick={playerRepeatStatus}/>
-            }
-            {
-              currentRepeatStatus.single &&
-              <RepeatOneIcon className={classNames(classes.icons,classes.itemFlex)} onClick={playerRepeatStatus}/>
-            }
-          </div> */}
-          {/* <div> */}
             <BottomNavigation className={classes.bn_root}>
-              <BottomNavigationAction className={classes.bn_action } label="Recents" value="recents" icon={<ShuffleIcon className={classNames(classes.icons)}/>} />
-              <BottomNavigationAction className={classes.bn_action } label="Favorites" value="favorites" icon={<SkipPrevIcon className={classNames(classes.icons)} onClick={()=>changeTrack('prev') }/>} />
-              <BottomNavigationAction className={classes.bn_action } label="Nearby" value="nearby"
+              <BottomNavigationAction className={classes.bn_action } label="shuffle" icon={<ShuffleIcon className={classNames(classes.icons)}/>} />
+              <BottomNavigationAction className={classes.bn_action } label="prevSkip" icon={<SkipPrevIcon className={classNames(classes.icons)} onClick={()=>changeTrack('prev') }/>} />
+              <BottomNavigationAction className={classes.bn_action } label="play_pause"
                 icon={
                       playState ?
                       <PauseIcon className={classNames(classes.icons)} onClick={()=>controlFromPlayer("pause")}/>
                       :
                       <PlayIcon className={classNames(classes.icons)} onClick={()=>controlFromPlayer("play")}/>
                      } />
-              <BottomNavigationAction className={classes.bn_action } label="Folder" value="folder" icon={<SkipNextIcon className={classNames(classes.icons)} onClick={()=>changeTrack('next') }/>} />
-              <BottomNavigationAction className={classes.bn_action } label="Folder" value="folder"
+              <BottomNavigationAction className={classes.bn_action } label="nextSkip" icon={<SkipNextIcon className={classNames(classes.icons)} onClick={()=>changeTrack('next') }/>} />
+              <BottomNavigationAction className={classes.bn_action } label="repeator"
                 icon={
                           ((currentRepeatStatus.norepeat || currentRepeatStatus.all) &&
                           <RepeatIcon className={classNames(classes.icons, {[classes.repeatAll] : currentRepeatStatus.all})} onClick={playerRepeatStatus}/>)
