@@ -25,9 +25,9 @@ Simple Music Player utilizing
 - Skip tracks and repeat all songs only work when the playlist is available
 - Shuffle songs
 - Better IOS support
-- ~~Text styles for search results
-- Volume control, ~~slider bar control
-- ~~No duplicate in the playlist
+- ~~Text styles for search results~~
+- Volume control, ~~slider bar control~~
+- ~~No duplicate in the playlist~~
 - button to show more results (pagetoken)
 - marquee for long text
 
