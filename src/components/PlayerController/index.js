@@ -16,48 +16,31 @@ import Typography from '@material-ui/core/Typography'
 
 
 
-import BottomNavigation from '@material-ui/core/BottomNavigation';
-import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
+import BottomNavigation from '@material-ui/core/BottomNavigation'
+import BottomNavigationAction from '@material-ui/core/BottomNavigationAction'
 
 const styles = theme =>({
   root : {
     display:'flex',
-    // alignItems:'stretch',
-    // border:'1px solid black',
-    // width:'100%',
     flexDirection:'column',
-    flexGrow:1
+    flexGrow:1,
+    height:'100%',
+
   },
   controlWrapper : {
     display:'flex',
-    flexDirection:'row'
+    flexDirection:'row',
+    height:'100%',
   },
 
   playerControl : {
     display:'flex',
     flex:1,
-    // border:'1px solid black',
     flexDirection:'column',
-
     alignItems:'center',
-    // alignContent:'space-between',
   },
   icons: {
-    // cursor :'pointer',
-    // border:'1px solid black'
-  },
-  flexIcon:{
-    flex:1,
-    margin:0,
-    padding:0,
-    // border:'1px solid white'
-  },
-  itemFlex : {
-    // flexGrow:1,
-    // fontSize:40
-  },
-  bigIcon : {
-    // fontSize:60
+    fontSize:30
   },
   title: {
     color:'#fff'
@@ -110,7 +93,13 @@ const PlayerController = (props) => {
           currentPosition,
           playerRepeatStatus,
           currentRepeatStatus,
-          changeTrack } = props
+          changeTrack,
+          seekSong,
+          sliderChangeStart,
+          sliderChangeEnd,
+          sliderState,
+          sliderValueWhileChanging
+        } = props
   // console.log(currentRepeatStatus)
   return(
     <div id="controller" className={classes.root}>
@@ -150,30 +139,32 @@ const PlayerController = (props) => {
           </div> */}
           {/* <div> */}
             <BottomNavigation className={classes.bn_root}>
-              <BottomNavigationAction className={classes.bn_action } label="Recents" value="recents" icon={<ShuffleIcon className={classNames(classes.flexIcon,classes.itemFlex)}/>} />
-              <BottomNavigationAction className={classes.bn_action } label="Favorites" value="favorites" icon={<SkipPrevIcon className={classNames(classes.flexIcon,classes.itemFlex)} onClick={()=>changeTrack('prev') }/>} />
+              <BottomNavigationAction className={classes.bn_action } label="Recents" value="recents" icon={<ShuffleIcon className={classNames(classes.icons)}/>} />
+              <BottomNavigationAction className={classes.bn_action } label="Favorites" value="favorites" icon={<SkipPrevIcon className={classNames(classes.icons)} onClick={()=>changeTrack('prev') }/>} />
               <BottomNavigationAction className={classes.bn_action } label="Nearby" value="nearby"
                 icon={
                       playState ?
-                      <PauseIcon className={classNames(classes.flexIcon,classes.itemFlex, classes.bigIcon)} onClick={()=>controlFromPlayer("pause")}/>
+                      <PauseIcon className={classNames(classes.icons)} onClick={()=>controlFromPlayer("pause")}/>
                       :
-                      <PlayIcon className={classNames(classes.flexIcon,classes.itemFlex, classes.bigIcon)} onClick={()=>controlFromPlayer("play")}/>
+                      <PlayIcon className={classNames(classes.icons)} onClick={()=>controlFromPlayer("play")}/>
                      } />
-              <BottomNavigationAction className={classes.bn_action } label="Folder" value="folder" icon={<SkipNextIcon className={classNames(classes.flexIcon,classes.itemFlex)} onClick={()=>changeTrack('next') }/>} />
+              <BottomNavigationAction className={classes.bn_action } label="Folder" value="folder" icon={<SkipNextIcon className={classNames(classes.icons)} onClick={()=>changeTrack('next') }/>} />
               <BottomNavigationAction className={classes.bn_action } label="Folder" value="folder"
                 icon={
                           ((currentRepeatStatus.norepeat || currentRepeatStatus.all) &&
-                          <RepeatIcon className={classNames(classes.flexIcon,classes.itemFlex, {[classes.repeatAll] : currentRepeatStatus.all})} onClick={playerRepeatStatus}/>)
+                          <RepeatIcon className={classNames(classes.icons, {[classes.repeatAll] : currentRepeatStatus.all})} onClick={playerRepeatStatus}/>)
 
                            ||
 
                           (currentRepeatStatus.single &&
-                          <RepeatOneIcon className={classNames(classes.flexIcon,classes.itemFlex, classes.repeatOne)} onClick={playerRepeatStatus}/>)
+                          <RepeatOneIcon className={classNames(classes.icons, classes.repeatOne)} onClick={playerRepeatStatus}/>)
 
                      } />
             </BottomNavigation>
           {/* </div> */}
 
+
+          <div style={{ height:10}}></div>
 
           {/* Song Duration */}
           <div className={classes.slider}>
@@ -181,6 +172,11 @@ const PlayerController = (props) => {
             <Sliders
               total={currentSongDuration}
               currentPosition = {currentPosition}
+              seekSong = { seekSong }
+              sliderChangeStart = { sliderChangeStart }
+              sliderChangeEnd = { sliderChangeEnd }
+              sliderState = { sliderState }
+              sliderValueWhileChanging = { sliderValueWhileChanging}
             />
           </div>
 
@@ -190,6 +186,7 @@ const PlayerController = (props) => {
               {currentSongTitle}
             </Typography>
           </div>
+
         </div>
 
       </div>

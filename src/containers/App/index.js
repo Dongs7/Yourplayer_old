@@ -9,12 +9,13 @@ import { connect } from 'react-redux'
 import Main from 'components/Routes/Main'
 
 import Layout from 'containers/Layout'
+
 // dev only
 import { hot } from 'react-hot-loader'
 
 
 class App extends Component {
-  
+
 
   render(){
     return(

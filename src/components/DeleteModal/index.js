@@ -1,9 +1,9 @@
 import React from 'react'
 
-import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Modal from '@material-ui/core/Modal';
-import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles'
+import Typography from '@material-ui/core/Typography'
+import Modal from '@material-ui/core/Modal'
+import Button from '@material-ui/core/Button'
 
 const styles = theme => ({
   paper: {
@@ -20,6 +20,9 @@ const styles = theme => ({
   },
   button:{
     margin: theme.spacing.unit,
+  },
+  title :{
+    color:'#333'
   }
 });
 
@@ -29,7 +32,7 @@ const DeleteModal = (props) => {
   const { classes, openState, handleModalClose, selectedID, removeItemFromList } = props
   // console.log(selectedID)
   return(
-    <div style={{ border:'1px solid red'}}>
+    <div>
       <Modal
           aria-labelledby="simple-modal-title"
           aria-describedby="simple-modal-description"
@@ -37,7 +40,7 @@ const DeleteModal = (props) => {
           onClose={handleModalClose}
         >
           <div className={classes.paper}>
-            <Typography variant="title" id="modal-title">
+            <Typography variant="title" id="modal-title" className={classes.title}>
               Do you want to remove this song from the list?
             </Typography>
             <Button variant="outlined" color="secondary" className={classes.button} size="large" onClick = {()=>removeItemFromList(selectedID) }>REMOVE</Button>

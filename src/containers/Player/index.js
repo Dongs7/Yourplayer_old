@@ -21,6 +21,8 @@ class Player extends Component {
       repeatCounter : 1,
       currentSongIdx : 0,
       // toastOpen : false
+      isSliderChanged : false,
+      seekValue : 0
     }
 
     this._handleReady = this._handleReady.bind(this)
@@ -34,6 +36,9 @@ class Player extends Component {
     this._getNextSongVideoId = this._getNextSongVideoId.bind(this)
     this._getPrevSongVideoId = this._getPrevSongVideoId.bind(this)
     this._handleTrack = this._handleTrack.bind(this)
+    this._handleSlider = this._handleSlider.bind(this)
+    this._startChangeSlider = this._startChangeSlider.bind(this)
+    this._endChangeSlider = this._endChangeSlider.bind(this)
 
   }
 
@@ -45,8 +50,16 @@ class Player extends Component {
       this.props.fetchPlayingState(false)
       this._onPause()
     }else{
-      this.props.fetchPlayingState(true)
-      this._onPlay()
+      if(this.props.selectedSongId !== ''){
+        this.props.fetchPlayingState(true)
+        this._onPlay()
+      }else{
+        this.setState({ songTitle : 'Please select songs'})
+        this.props.controlPlayFromIcon("fail")
+        setTimeout(()=>{
+          this.setState({ songTitle : ''})
+        }, 700)
+      }
     }
 
   }
@@ -89,7 +102,7 @@ class Player extends Component {
     this.setState({ songDuration : this.state.player.getDuration() })
 
     // Get the Song's title
-    this.setState({ songTitle : this.state.player.getVideoData().title })
+    this.setState({ songTitle : this.props.selectedSongTitle })
 
     // Send the song's current time in every 100ms
     this.timer = setInterval(()=>
@@ -126,7 +139,7 @@ class Player extends Component {
   // Handle custom Player using Youtube iframe state data
   _onStateChange(e) {
     clearInterval(this.timer)
-    // console.log(e.data + ' State Value ')
+    console.log(e.data + ' State Value ')
 
     // 5 - Video Cued
     if(e.data === 5){
@@ -141,8 +154,13 @@ class Player extends Component {
 
       // -1 - No data
       // 3 - Buffering
+      // if e.data is changed by user changing slider,
+      // dont change songTitle.
     }else if(e.data === -1 || e.data === 3){
-      this.setState({ songTitle : 'Getting next song..'})
+      if(!this.state.isSliderChanged){
+        this.setState({ songTitle : 'Getting next song..'})
+      }
+
     }
   }
 
@@ -215,10 +233,40 @@ class Player extends Component {
     }
   }
 
+  // If the slider value is changing,
+  // set temp value where the slider handle is sitting on the track
+  _handleSlider(value){
+
+    if (this.state.isSliderChanged) {
+      this.setState({ seekValue: value })
+    }
+  }
+
+  // Start to change slider value
+  _startChangeSlider() {
+    this.setState({ isSliderChanged : true })
+  }
+
+  // Change current position of the song to the temp value obtained.
+  // Change state after 1200ms for better UI.
+  // (Change position first then change slider value)
+  _endChangeSlider() {
+    // console.log('this is called in end Chgne ', this.state.isSliderChanged)
+    if (this.state.isSliderChanged){
+      this.state.player.seekTo(this.state.seekValue)
+    }else{
+      this.setState({ seekValue: 0 })
+    }
+    setTimeout(()=>{
+      this.setState({ isSliderChanged : false })
+    }, 1200)
+
+  }
+
   render(){
 
     const {  selectedSongId, playingState, repeatSelector } = this.props
-    const {  songDuration, songTitle, currentPosition } = this.state
+    const {  songDuration, songTitle, currentPosition, isSliderChanged, seekValue } = this.state
     let opts = {
       width:0,
       height:0,
@@ -230,8 +278,7 @@ class Player extends Component {
     }
 
     return(
-      <div>
-
+      <div style={{ height:'inherit'}}>
         <PlayerController
           playState = {playingState}
           controlFromPlayer = {this._handleControlFromPlayer}
@@ -241,6 +288,11 @@ class Player extends Component {
           playerRepeatStatus = { this._handleRepeat }
           currentRepeatStatus = { repeatSelector }
           changeTrack = { this._handleTrack }
+          seekSong = { this._handleSlider }
+          sliderChangeStart = { this._startChangeSlider }
+          sliderChangeEnd = { this._endChangeSlider }
+          sliderState = { isSliderChanged }
+          sliderValueWhileChanging = { seekValue }
         />
         <YouTube
           videoId={selectedSongId}
@@ -257,8 +309,10 @@ class Player extends Component {
 }
 
 const mapStateToProps = state => {
+  console.log(state)
   return{
-    selectedSongId : state.fetchSong,
+    selectedSongId : state.fetchSong.songID,
+    selectedSongTitle : state.fetchSong.songTitle,
     controlFromIcon : state.controlPlayer,
     playingState : state.fetchPlayingState,
     repeatSelector : state.getPlayerRepeat,

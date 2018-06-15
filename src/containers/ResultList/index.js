@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 
 import { connect } from 'react-redux'
+import find from 'lodash/find'
 
 import DisplayList  from 'components/DisplayList'
 
@@ -15,7 +16,10 @@ class ResultList extends Component {
       isRemoveClicked : '',
       isModalOpen : false,
       isToasterOpen : false,
-      titleToBeAdded : ''
+      toastContents : {
+        text : '',
+        error : false
+      }
     }
     this._handleSelectedSong = this._handleSelectedSong.bind(this)
     this._handleMouseOver = this._handleMouseOver.bind(this)
@@ -29,11 +33,12 @@ class ResultList extends Component {
   }
 
   // Send selected song ID when the user clicks the song from the result list
-  _handleSelectedSong(id_val) {
+  _handleSelectedSong(id_val, title_val) {
     if(this.props.playingState){
       this._playerControl("pause")
     }
-    this.props.fetchSelectedSong(id_val)
+    this.props.fetchSelectedSong(id_val, title_val)
+
   }
 
   _handleMouseOver(e,id){
@@ -45,18 +50,38 @@ class ResultList extends Component {
     this.setState({ isMouseOver : '' })
   }
 
-  _playerControl(type){
+  _playerControl(type, vId, title){
+    // if videoId and title params are provided, execute action function
+    if(vId !== undefined && title !== undefined){
+      this.props.fetchSelectedSong(vId, title)
+    }
     this.props.controlPlayFromIcon(type)
   }
 
 
-  // Function to add the selected song to the playlist
+  // Function to add the selected song to the playlist if the song is not in the playlist
   _handleList(videoId, videoTitle){
-    this.setState({ isToasterOpen : true, titleToBeAdded : videoTitle })
-    this.props.addMusicToList(videoId, this.props.userPlaylistId)
-    setTimeout(()=>{
-      this.setState({ isToasterOpen : false })
-    }, 3000)
+    console.log("this firssss")
+    console.log(this.props.playlistResults)
+    if(this.props.playlistResults.length <= 0) {
+      this.setState({ isToasterOpen : true, toastContents : {text :'We can\'t access your playlist. Please create or reinitialize the playlist', error: true} })
+    }else {
+      let dupfind = false
+      find(this.props.playlistResults.items, (item) => {
+        console.log(item)
+        if(item.snippet.resourceId.videoId === videoId){
+            dupfind = true
+            return
+        }
+      })
+
+      if(dupfind){
+        this.setState({ isToasterOpen : true, toastContents : {text :`${videoTitle} is already in your playlist`, error: true} })
+      }else{
+        this.setState({ isToasterOpen : true, toastContents : {text :`${videoTitle} is successfully added to your playlist`, error: false} })
+        this.props.addMusicToList(videoId, this.props.userPlaylistId)
+      }
+    }
   }
 
   // Remove the selected song from the playlist
@@ -103,19 +128,18 @@ class ResultList extends Component {
         removeItemFromList = { this._handleRemoveConfirmed }
         toasterState = { this.state.isToasterOpen }
         handleCloseToast = { this._closeToastWindow }
-        titleTobeAdded = { this.state.titleToBeAdded }
+        toastContents = { this.state.toastContents }
       />
     )
   }
 }
 
 const mapStateToProps = state => {
-
+  console.log(state.dataFetch.playlistResults)
   return{
-    selectedSongId : state.fetchSong,
     results : state.dataFetch.results,
     playlistResults : state.dataFetch.playlistResults,
-    currentPlayingSong : state.fetchSong,
+    currentPlayingSong : state.fetchSong.songID,
     playingState : state.fetchPlayingState,
     user_info : state.userRed,
     userPlaylistId : state.playlistIdFetch

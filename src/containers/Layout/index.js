@@ -7,25 +7,28 @@ import { getUserInfo, userLogout, getUserToken, initPlaylistForUser, fetchPlayli
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 
-import { withStyles } from '@material-ui/core/styles';
-import Drawer from '@material-ui/core/Drawer';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import Hidden from '@material-ui/core/Hidden';
-import MenuIcon from '@material-ui/icons/Menu';
-import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles'
+import Drawer from '@material-ui/core/Drawer'
+import AppBar from '@material-ui/core/AppBar'
+import Toolbar from '@material-ui/core/Toolbar'
+import Typography from '@material-ui/core/Typography'
+import IconButton from '@material-ui/core/IconButton'
+import Hidden from '@material-ui/core/Hidden'
+import MenuIcon from '@material-ui/icons/Menu'
+import Button from '@material-ui/core/Button'
 import Avatar from '@material-ui/core/Avatar'
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import MenuItem from '@material-ui/core/MenuItem';
-import MenuList from '@material-ui/core/MenuList';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener'
+import Grow from '@material-ui/core/Grow'
+import Paper from '@material-ui/core/Paper'
+import MenuItem from '@material-ui/core/MenuItem'
+import MenuList from '@material-ui/core/MenuList'
 
 import ExpansionPlaylist from 'components/ExpansionPlaylist'
 
-import { Manager, Target, Popper } from 'react-popper';
+import { Manager, Target, Popper } from 'react-popper'
+
+import Search from 'containers/Search'
+import Player from 'containers/Player'
 
 const drawerWidth = 350;
 
@@ -62,7 +65,7 @@ const styles = theme => ({
   },
   content: {
     flexGrow: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#333',
     minHeight:'100vh'
   },
   flex : {
@@ -76,6 +79,31 @@ const styles = theme => ({
   popperClose: {
     pointerEvents: 'none',
   },
+
+  searchWrapper : {
+    minHeight:64,
+    display:'flex',
+    flexDirection:'row',
+    justifyContent:'center',
+    flex:' 0 0 auto',
+    backgroundColor:'#333',
+  },
+
+  playerWrapper: {
+    flex:'0 0 auto',
+    flexGrow:1,
+    width:'calc(100% - 350px)',
+    [theme.breakpoints.down("sm")]:{
+      width:'100%'
+    },
+    position:'fixed',
+    bottom:0,
+    zIndex:5,
+    height:120,
+    backgroundColor:'#333',
+  },
+
+
 });
 
 class Layout extends Component {
@@ -172,11 +200,10 @@ class Layout extends Component {
       // set credentials using information obtained from above code for firebase login
       const credentials = auth.GoogleAuthProvider.credential(authResponse.id_token, authResponse.access_token)
 
-      const fireUser = auth().currentUser
-
+      let fireUser = auth().currentUser
       // if no signed in user in firebase auth system,
       if(!fireUser){
-
+        console.log("does this function fire after logout?")
         // Sign in the user using the credential created above
         auth().signInAndRetrieveDataWithCredential(credentials)
         .then((user)=> {
@@ -192,6 +219,7 @@ class Layout extends Component {
               docRef.set({
                 id:user.user.uid
               })
+              console.log("user id dne, create one")
             }else{
               // If user exists, then check if there is a playlist ID for this user.
               // If ID exists, pass it to the store
@@ -229,10 +257,11 @@ class Layout extends Component {
   // Sign out from google auth, then firebase.
 
   _handleSignOut(event){
+    //remove playlist when the user signs out
+    this.props.fetchPlaylistID('')
     window.gapi.auth2.getAuthInstance().signOut()
     .then(()=>{
       auth().signOut()
-
     }).catch(err=>console.log(err))
   }
 
@@ -241,9 +270,12 @@ class Layout extends Component {
   // Check if the current playlist ID is in the DB, then send this ID to the store
   componentDidUpdate(prevProps){
     const { userPlaylistId, userState } = this.props
+
     if(prevProps.userPlaylistId !== userPlaylistId){
-      this._updateDBwithUserPlaylistId(userState.uid, userPlaylistId)
-      this.props.fetchItemsFromPlaylist(userPlaylistId)
+      if(userPlaylistId !== ''){
+        this._updateDBwithUserPlaylistId(userState.uid, userPlaylistId)
+        this.props.fetchItemsFromPlaylist(userPlaylistId)
+      }
     }
   }
 
@@ -299,6 +331,7 @@ class Layout extends Component {
   }
 
   render(){
+
     const { classes, theme, userState, userPlaylistId } = this.props
     const { popperOpen }  = this.state
 
@@ -308,7 +341,8 @@ class Layout extends Component {
         <ExpansionPlaylist
           user={userState}
           playlistCreator = { this._createPlaylist }
-          plistId = { userPlaylistId } />
+          plistId = { userPlaylistId }
+          handleSignin = { this._handleSignIn }/>
       </div>
     )
 
@@ -380,6 +414,7 @@ class Layout extends Component {
 
           </Toolbar>
         </AppBar>
+
         <Hidden mdUp>
           <Drawer
             variant="temporary"
@@ -407,9 +442,22 @@ class Layout extends Component {
             {drawer}
           </Drawer>
         </Hidden>
+
         <main className={classes.content}>
+          <div className={classes.toolbar} />
+
+          {/* Search Term Container */}
+          <div className={classes.searchWrapper}>
+            <Search/>
+          </div>
 
           {this.props.children}
+
+          {/* Player Control Container */}
+          <div className={classes.playerWrapper}>
+            <Player />
+          </div>
+
         </main>
       </div>
     )

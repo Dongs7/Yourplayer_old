@@ -15,21 +15,12 @@ const getTimer = (total) => {
   }
 }
 
-const timer = setInterval(()=>{
-
-})
-
-const updatePosition = (startPos, endPos) => {
-  if(startPos < endPos){
-
-  }
-}
-
 const styles = ({
   time_text : {
     fontSize: 13,
     paddingLeft : 10,
-    paddingRight : 10
+    paddingRight : 10,
+    color:'#ddd'
   },
   slider_root : {
     padding:0
@@ -38,10 +29,19 @@ const styles = ({
 
 const Sliders = (props) => {
 
-  const { total, classes, currentPosition } = props
+  const { total,
+          classes,
+          currentPosition,
+          seekSong,
+          sliderChangeStart,
+          sliderChangeEnd,
+          sliderState,
+          sliderValueWhileChanging
+        } = props
   const maxValue = getTimer(total)
   // console.log((currentPosition))
   // console.log((total))
+
   return (
       <div style={{ display : 'flex', flexDirection:'row', alignItems:'center'}}>
         <span className={classes.time_text}>
@@ -57,6 +57,9 @@ const Sliders = (props) => {
           className={classes.slider_root}
           min={0}
           max={total}
+          onBeforeChange={ sliderChangeStart }
+          onChange={seekSong}
+          onAfterChange={ sliderChangeEnd }
           trackStyle={{ backgroundColor: '#bbb', height: 10 }}
           railStyle={{ backgroundColor: '#555', height: 10 }}
           handleStyle={{
@@ -68,7 +71,14 @@ const Sliders = (props) => {
             marginTop: -0,
             backgroundColor: '#fff',
           }}
-          value={currentPosition > 0 ? Math.floor(currentPosition) : 0}
+          // value={currentPosition > 0 ? Math.floor(currentPosition) : 0 }
+          value = {sliderState ?
+                   sliderValueWhileChanging
+                   :
+                   currentPosition > 0 ?
+                     Math.floor(currentPosition)
+                     :
+                     0}
           />
         <span className={classes.time_text}>{maxValue}</span>
       </div>

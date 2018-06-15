@@ -1,9 +1,16 @@
 import { FETCH_SONG } from 'actions/actionTypes'
 
-export function fetchSong(state = '', action) {
+const initialState = {
+  songID : '',
+  songTitle : ''
+}
+export function fetchSong(state = initialState, action) {
     switch (action.type) {
         case 'FETCH_SONG':
-            return action.song_Id;
+            return {
+              songID : action.songdata.song_Id,
+              songTitle : action.songdata.song_Title
+            }
 
         default:
             return state;

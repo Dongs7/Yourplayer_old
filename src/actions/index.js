@@ -100,10 +100,13 @@ export const fetchData = (term) => dispatch => {
 
 // SELECTED Song
 
-export const fetchSelectedSong = (song_Id) => {
+export const fetchSelectedSong = (song_Id, song_Title) => {
   return {
     type : actionTypes.FETCH_SONG,
-    song_Id
+    songdata:{
+      song_Id,
+      song_Title
+    }
   }
 }
 
@@ -204,7 +207,7 @@ const checkPlaylist = (listItem) => {
     }
     return null
   })
-  console.log(listId, ' from action check playlist')
+  // console.log(listId, ' from action check playlist')
   return listId
 }
 

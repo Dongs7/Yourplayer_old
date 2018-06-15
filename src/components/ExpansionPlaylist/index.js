@@ -26,6 +26,9 @@ const styles = theme => ({
     fontWeight: theme.typography.fontWeightRegular,
     color:'#fff'
   },
+  divider_color : {
+    backgroundColor : theme.palette.primary.main
+  }
 })
 
 const ExpansionPlaylist = (props) => {
@@ -46,28 +49,27 @@ const ExpansionPlaylist = (props) => {
           </Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          {/* <Typography>
-            added songs go in here
-          </Typography> */}
           {
             user ?
               <ResultList forPlaylist/>
               :
-              'Log In'
+              <Button size="large" fullWidth disabled variant="flat">
+                <span style={{ color:'#fff'}}>SIGN IN TO USE PLAYLIST </span>
+              </Button>
           }
 
         </ExpansionPanelDetails>
-        <Divider />
+        <Divider
+          classes ={{ root: classes.divider_color}}/>
         <ExpansionPanelActions>
-
             {
-              user ?
-                plistId !== '' ? <Button size="small" color="secondary"> SAVE </Button>
-                : <Button size="small" color="primary" onClick={playlistCreator}> CREATE PLAYLIST </Button>
+              user  ?
+                plistId !== '' ? <Button size="small" color="primary" variant="raised" onClick={playlistCreator}> Reload Playlist </Button>
+                :
+                <Button size="small" color="primary" variant="raised" onClick={playlistCreator}> Solve Playlist issues </Button>
               :
-              <Button size="small" color="secondary" disabled fullWidth> LOG IN TO USE PLAYLIST</Button>
+              ''
             }
-
         </ExpansionPanelActions>
       </ExpansionPanel>
 
