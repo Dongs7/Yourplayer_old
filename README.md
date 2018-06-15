@@ -35,3 +35,4 @@ Simple Music Player utilizing
 - add song in the playlist if the song is not in the list
 - seek currently playing song using slider bar
 - improved UI
+- Fixed: unable to show track title when clicking prev, next skip button
