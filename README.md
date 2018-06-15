@@ -22,7 +22,8 @@ Simple Music Player utilizing
 
 # Features to be updated / fixed / added
 
-- Shuffle songs in the playlist
+- Skip tracks and repeat all songs only work when the playlist is available
+- Shuffle songs
 - Better IOS support
 - Text styles for search results
 - Volume control, slider bar control
