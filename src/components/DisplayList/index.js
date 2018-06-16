@@ -5,6 +5,7 @@ import classNames from 'classnames'
 import Grid from '@material-ui/core/Grid'
 import Typography from '@material-ui/core/Typography'
 import Badge from '@material-ui/core/Badge'
+import Button from '@material-ui/core/Button'
 import AddIcon from '@material-ui/icons/AddCircleOutline'
 import PlayIcon from '@material-ui/icons/PlayCircleOutline'
 import PauseIcon from '@material-ui/icons/PauseCircleOutline'
@@ -23,6 +24,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import DeleteModal from 'components/DeleteModal'
 import Toast from 'components/Toast'
 
+const animationId = 'pulse'
 
 const styles = theme => ({
   root : {
@@ -72,7 +74,21 @@ const styles = theme => ({
   },
   button: {
     marginRight: theme.spacing.unit,
-    color:'#ddd'
+    color:'#ddd',
+    // animation:'pulse 2s infinite'
+  },
+  playing_button:{
+    marginRight: theme.spacing.unit,
+    color:'#ddd',
+    borderRadius: '50%',
+    boxShadow: '0 0 0 rgba(255,255,255, 0.4)',
+    animation:'pulse 2s infinite'
+  },
+  playing_button_pause:{
+    color:'#ddd',
+    borderRadius: '50%',
+    boxShadow: '0 0 0 rgba(220,20,60, 0.4)',
+    // animation:'pulse 2s infinite'
   },
   hiddenIcon:{
     visibility:'hidden'
@@ -84,6 +100,11 @@ const styles = theme => ({
   },
   noresult_listitem:{
     justifyContent:'center'
+  },
+  [`@keyframes ${animationId}`]: {
+    '0%': {boxShadow: '0 0 0 rgba(255,255,255, 0.4)'},
+    '70%': {boxShadow: '0 0 50px rgba(255,255,255, 0.9)'},
+    '100%' : {boxShadow: '0 0 0 rgba(255,255,255, 0.4)'}
   },
 
 })
@@ -107,9 +128,14 @@ const DisplayList = (props) => {
           removeItemFromList,
           toasterState,
           handleCloseToast,
-          toastContents
+          toastContents,
+          pageToken,
+          loadPlaylist,
+          checkPlaylistStatus,
+          totalNumberofItemsInList,
+          isLoading
          } = props
-  // console.log(data)
+  // console.log(checkPlaylistStatus)
   return(
     <div className={classes.root}>
       {
@@ -131,7 +157,7 @@ const DisplayList = (props) => {
                 (data.items && data.items.length > 0 ) ?
                   <ListItem>
                     <Chip
-                      avatar={<Avatar> <Badge badgeContent={data.items.length} color="primary"><span style={{ display:'none'}}></span></Badge></Avatar>}
+                      avatar={<Avatar> <Badge badgeContent={totalNumberofItemsInList} color="primary"><span style={{ display:'none'}}></span></Badge></Avatar>}
                       label="TOTAL SONGS IN THIS PLAYLIST"
                     />
                   </ListItem>
@@ -157,11 +183,28 @@ const DisplayList = (props) => {
               }
 
               {
-                data.items ?
+
                 data.items.length <= 0 ?
-                <ListItem>
-                  <Typography style={{ color:'#ddd', fontSize:15}}>No Songs in your playlist</Typography>
+                <ListItem className={classes.noresult_listitem}>
+                  {
+                    isPlaylist ?
+                      isLoading ?
+                      <Typography style={{ color:'#ddd', fontSize:77}}>Loading playlist..</Typography>
+                      :
+                      checkPlaylistStatus !== '' ?
+                      <Typography style={{ color:'#ddd', fontSize:22}}>Your list is empty! Add your favorite songs now!</Typography>
+                      :
+                      <Typography style={{ color:'#ddd', fontSize:15}}>Fail to fetch items from the playlist. If this is your first time using this player, we'll create the playlist for you. Otherwise, we'll reload your playlist. Click the button below to solve problems.</Typography>
+                      // checkPlaylistStatus !== '' ?
+                      //   <Typography style={{ color:'#ddd', fontSize:15}}>No Songs in your playlist</Typography>
+                      //   :
+                      //   <Typography style={{ color:'#ddd', fontSize:15}}>Fail to fetch items from the playlist. If this is your first time using this player, we'll create the playlist for you. Otherwise, we'll reload your playlist. Click the button below to solve problems.</Typography>
+
+                    :
+                    <Typography style={{ color:'#ddd', fontSize:44}}>No Search Results</Typography>
+                  }
                 </ListItem>
+
                 :
 
                 data.items.map(n => {
@@ -173,11 +216,11 @@ const DisplayList = (props) => {
 
                       <ListItem divider button key={videoId} id={videoId} onMouseOver={(e)=>mouseOverOnRow(e,videoId)} onMouseLeave={mouseLeaveOnRow}>
                         {
-                          isPlaylist ?
-                          <ListItemIcon className={classes.button} aria-label="remove" color="secondary">
-                            <RemoveIcon id={n.id} className={classNames(classes.removeIcon,classes.icon_pointer, {[classes.removeIcon_rotate] : checkRemoveID === n.id })} onClick={ removeItem }/>
-                          </ListItemIcon>
-                          :
+                          // isPlaylist ?
+                          // <ListItemIcon className={classes.button} aria-label="remove" color="secondary">
+                          //   <RemoveIcon id={n.id} className={classNames(classes.removeIcon,classes.icon_pointer, {[classes.removeIcon_rotate] : checkRemoveID === n.id })} onClick={ removeItem }/>
+                          // </ListItemIcon>
+                          // :
                            mouseState === videoId ?
                               currentPlayingSong === videoId ?
                                 playingState ?
@@ -185,8 +228,8 @@ const DisplayList = (props) => {
                                                 <PauseIcon onClick={()=>playerControlFromDisplayList('pause')}/>
                                               </ListItemIcon>
                                              :
-                                             <ListItemIcon className={classes.button} aria-label="play" color="secondary">
-                                               <PlayIcon onClick={()=>playerControlFromDisplayList('play')}/>
+                                             <ListItemIcon className={classes.button} aria-label="play" color="primary">
+                                               <PlayIcon onClick={()=>playerControlFromDisplayList('play')} />
                                              </ListItemIcon>
                               :
                               <ListItemIcon className={classes.button} aria-label="play" color="secondary">
@@ -194,38 +237,46 @@ const DisplayList = (props) => {
                               </ListItemIcon>
                           :
                           currentPlayingSong === videoId ?
-                          <ListItemIcon className={classes.button} aria-label="vol" color="secondary">
+                          <ListItemIcon className={playingState ? classes.playing_button : classes.playing_button_pause} aria-label="vol" color="secondary" >
                            <VolumnIcon />
                           </ListItemIcon>
                           :
-                          <ListItemIcon className={classes.button} aria-label="play" color="secondary">
+                          <ListItemIcon className={classes.button} aria-label="play" color="secondary" >
                             <PlayIcon  className={classes.hiddenIcon}/>
                           </ListItemIcon>
 
                         }
                         <ListItemText disableTypography className={classes.result_title} primary={trimTitle} onClick={()=>selectedSong(videoId,trimTitle)} />
                       {
-                        !isPlaylist &&
+                        !isPlaylist ?
                         <ListItemIcon className={classes.button} onClick={()=>addItemToList(videoId, trimTitle)}>
                           <AddIcon/>
                         </ListItemIcon>
+                        :
+                        <ListItemIcon className={classes.button} aria-label="remove" color="secondary">
+                          <RemoveIcon id={n.id} className={classNames(classes.removeIcon,classes.icon_pointer, {[classes.removeIcon_rotate] : checkRemoveID === n.id })} onClick={ removeItem }/>
+                        </ListItemIcon>
                       }
                       </ListItem>
-                )
-                })
-                :
-                <ListItem className={classes.noresult_listitem}>
-                  {
-                    isPlaylist ?
-                    <Typography style={{ color:'#ddd', fontSize:15}}>Fail to fetch items from the playlist. If this is your first time using this player, we'll create the playlist for you. Otherwise, we'll reload your playlist. Click the button below to solve problems.</Typography>
-                    :
-                    <Typography style={{ color:'#ddd', fontSize:44}}>No Search Results</Typography>
-                  }
-
-                </ListItem>
+                    )
+                  })
               }
 
             </List>
+            {
+              pageToken ?
+                isPlaylist ?
+                <Button fullWidth variant="raised" onClick={()=>loadPlaylist("playlist") }>
+                  LOAD MORE PLAYLIST
+                </Button>
+                :
+                <Button fullWidth variant="raised" onClick={()=>loadPlaylist("results") }>
+                  LOAD MORE RESULTS
+                </Button>
+              :
+              ''
+            }
+
           </Grid>
         </Grid>
       </Grid>

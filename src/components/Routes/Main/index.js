@@ -8,10 +8,11 @@ const styles = theme => ({
     [theme.breakpoints.down("sm")]:{
       width:'100%'
     },
-    height:'calc(100% - 240px)',
+    height:'calc(100% - 270px)',
     overflow:'auto',
     color:'#fff',
-    padding:0,
+    // padding:0,
+    paddingBottom:50,
     position:'absolute' // set the position as absolute to enable ellipsis
   },
   searchWrapper : {

@@ -32,7 +32,7 @@ const styles = theme => ({
 })
 
 const ExpansionPlaylist = (props) => {
-  const { classes, user, plistId, playlistCreator } = props
+  const { classes, user, plistId, playlistCreator, isLoading } = props
   // console.log(plistId , ' from EXPANSIONLIST')
   return(
     <div className={classes.root}>
@@ -64,6 +64,9 @@ const ExpansionPlaylist = (props) => {
         <ExpansionPanelActions>
             {
               user  ?
+                isLoading ?
+                <Button size="small" color="primary" variant="raised"> Loading playlist... </Button>
+                :
                 plistId !== '' ? <Button size="small" color="primary" variant="raised" onClick={playlistCreator}> Reload Playlist </Button>
                 :
                 <Button size="small" color="primary" variant="raised" onClick={playlistCreator}> Solve Playlist issues </Button>

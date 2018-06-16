@@ -5,6 +5,7 @@ import { MuiThemeProvider } from '@material-ui/core/styles'
 import { theme } from 'config'
 import { connect } from 'react-redux'
 
+
 //Routes
 import Main from 'components/Routes/Main'
 
@@ -15,6 +16,7 @@ import { hot } from 'react-hot-loader'
 
 
 class App extends Component {
+
 
 
   render(){

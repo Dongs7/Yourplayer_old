@@ -11,7 +11,7 @@ export const getUserInfo = (user) =>{
 }
 
 export const getUserToken = (token) =>{
-  console.log("token fires")
+  // console.log("token fires")
   return{
     type: actionTypes.USER_TOKEN,
     token
@@ -24,7 +24,7 @@ export const userLogout = () =>{
   }
 }
 
-export const dataLoading = (bool) =>{
+const dataLoading = (bool) =>{
   return{
     type: actionTypes.FETCH_LOADING,
     isLoading : bool
@@ -46,9 +46,31 @@ export const dataSuccess = (data, resultType) =>{
   }
 }
 
-export const dataReset = () =>{
+export const dataReset = (target) =>{
   return{
-    type: actionTypes.RESET_DATA
+    type: actionTypes.RESET_DATA,
+    target
+  }
+}
+
+export const fetchMoreBegin = () =>{
+  return{
+    type: actionTypes.FETCH_MORE_BEGIN
+  }
+}
+
+export const fetchMore = (data, resultType) =>{
+  return{
+    type: actionTypes.FETCH_MORE,
+    data,
+    resultType
+  }
+}
+
+export const fetchTerm = (term) =>{
+  return{
+    type: actionTypes.FETCH_TERM,
+    term
   }
 }
 
@@ -60,43 +82,60 @@ export function errorAfterFiveSeconds() {
   }
 }
 
-export const fetchData = (term) => dispatch => {
-    console.log("fetchdata init")
-    if(term === ''){
-      dispatch(dataReset())
+export const fetchData = (term,token) => (dispatch, getState) => {
+  // console.log("fetchdata init")
+  dispatch(fetchTerm(term))
+
+  let pageToken  = ''
+
+  if(term === ''){
+    dispatch(dataReset(1))
+  }else{
+    if(token !== null){
+      pageToken = `&pageToken=${token}`
     }
-    else{
 
 
-    dispatch(dataLoading(true))
 
-    const url = "https://www.googleapis.com/youtube/v3/search?part=snippet&q="
-    var query = term
+    const url = "https://www.googleapis.com/youtube/v3/search?part=snippet&"
+    let query = `q=${term}`
     const url_numQuery = "&maxResults="
-    var maxNum = 45
+    let maxNum = 10
     const topidId = "&topicId=/m/04rlf"
     const videoCategoryId = "&videoCategoryId=10"
     const url_postFix = "&type=video&key="
-    // const pageToken = "&pageToken="
+    // let pageToken = "&pageToken="
 
-    var searchUrl = url + query + url_numQuery + maxNum + topidId + videoCategoryId + url_postFix + API_KEY
-    console.log("befire axios")
+    let searchUrl = url + query + url_numQuery + maxNum + topidId + videoCategoryId + url_postFix + API_KEY
+
+    if(token){
+      searchUrl +=  pageToken
+    }
+
+    // console.log("before axios")
     axios.get(searchUrl)
       .then((res) => {
+
         if(!res.status === 200){
           throw Error(res.statusText)
         }
-        console.log(res)
-        dispatch(dataLoading(false))
+        // console.log(res)
+
         return res
       })
       .then((res) => {
-        console.log("dataSuccess call")
-        dispatch(dataSuccess(res.data, 1))
+        // console.log("dataSuccess call ", res)
+        if(token){
+          dispatch(fetchMore(res.data, 1))
+        }else{
+          dispatch(dataSuccess(res.data, 1))
+        }
+
       })
       .catch(()=>dispatch(dataError(true)))
     }
 }
+
 
 // SELECTED Song
 
@@ -161,7 +200,7 @@ export const initPlaylistForUser = () => (dispatch, getState) => {
           }
           // console.log(app_playlistId)
         })
-        .catch((err)=>console.log(err))
+        .catch((err)=>console.log(err, ' fetch error!'))
 
     }else{
       console.log("user not logged in or fail to retrieve token for api service")
@@ -241,24 +280,35 @@ export const addMusicToList = (vId, pId) => (dispatch)=> {
 }
 
 // Fetch Items in the Playlist
-export const fetchItemsFromPlaylist = (pId, pageToken) => (dispatch) => {
+export const fetchItemsFromPlaylist = (pId, pageToken) => dispatch => {
+  dispatch(dataLoading(true))
   let requestOption = {
     playlistId : pId,
     part: 'snippet,id',
-    maxResults : 15
+    maxResults : 6
   }
 
   // if pageToken parameter is provided, add this value to the 'requestOption' object
-  if(pageToken){
+  if(pageToken !== null){
     requestOption.pageToken = pageToken
   }
 
   const request = window.gapi.client.youtube.playlistItems.list(requestOption)
+
   request.execute((res)=>{
+
     if(res.result){
-      dispatch(dataSuccess(res, 2))
+
+      // console.log(res)
+      // console.log(res.result)
+      if(pageToken){
+        dispatch(fetchMore(res, 2))
+      }else{
+        dispatch(dataSuccess(res, 2))
+      }
     }
   })
+  dispatch(dataLoading(false))
 }
 
 export const playerRepeatSelector = (selector) => {

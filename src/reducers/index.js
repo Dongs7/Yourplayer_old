@@ -1,7 +1,7 @@
 import { combineReducers } from 'redux'
 
 import userRed from './userRed'
-import { dataError, dataFetch, dataLoading, playlistIdFetch } from './dataRed'
+import { dataError, dataFetch, dataLoading, playlistIdFetch, termFetch } from './dataRed'
 import { fetchSong } from './songRed'
 import { controlPlayer, fetchPlayingState, getPlayerRepeat } from './controlRed'
 
@@ -13,8 +13,9 @@ const rootReducers = combineReducers({
   fetchSong,
   controlPlayer,
   fetchPlayingState,
-  playlistIdFetch,
-  getPlayerRepeat
+  pID: playlistIdFetch,
+  getPlayerRepeat,
+  termFetch
 })
 
 export default rootReducers

@@ -1,19 +1,13 @@
 import 'rc-slider/assets/index.css'
 
+import moment from 'moment'
+import momentDuration from 'moment-duration-format'
+
 import React from 'react'
 import { withStyles } from '@material-ui/core/styles'
 
 import Slider from 'rc-slider'
 
-const getTimer = (total) => {
-  if(total >= 3600){
-    return "hour"
-  }else{
-    let MM = Math.floor(total / 60)
-    let SS = Math.floor(total - (MM * 60) + 1)
-    return MM.toString() + ':' + SS.toString()
-  }
-}
 
 const styles = ({
   time_text : {
@@ -38,7 +32,6 @@ const Sliders = (props) => {
           sliderState,
           sliderValueWhileChanging
         } = props
-  const maxValue = getTimer(total)
   // console.log((currentPosition))
   // console.log((total))
 
@@ -47,7 +40,7 @@ const Sliders = (props) => {
         <span className={classes.time_text}>
           {
             currentPosition ?
-            Math.floor(currentPosition)
+            moment.duration(currentPosition, "seconds").format(total >= 3600 ? "h:mm:ss" : "mm:ss" ,{trim:false})
             :
             0
           }
@@ -80,7 +73,7 @@ const Sliders = (props) => {
                      :
                      0}
           />
-        <span className={classes.time_text}>{maxValue}</span>
+        <span className={classes.time_text}>{moment.duration(total, "seconds").format("h:mm:ss")}</span>
       </div>
 
   )

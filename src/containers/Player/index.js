@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 
 import { connect } from 'react-redux'
-import find from 'lodash/find'
+import {find, random} from 'lodash'
 import { fetchPlayingState, controlPlayFromIcon, playerRepeatSelector, fetchSelectedSong } from 'actions'
 import PlayerController from 'components/PlayerController'
 
@@ -22,7 +22,8 @@ class Player extends Component {
       currentSongIdx : 0,
       // toastOpen : false
       isSliderChanged : false,
-      seekValue : 0
+      seekValue : 0,
+      isShuffle : false
     }
 
     this._handleReady = this._handleReady.bind(this)
@@ -35,8 +36,10 @@ class Player extends Component {
     this._handleRepeat = this._handleRepeat.bind(this)
     this._getNextSongVideoId = this._getNextSongVideoId.bind(this)
     this._getPrevSongVideoId = this._getPrevSongVideoId.bind(this)
+    this._getRandomVideoId = this._getRandomVideoId.bind(this)
     this._handleTrack = this._handleTrack.bind(this)
     this._handleSlider = this._handleSlider.bind(this)
+    this._handleShuffle = this._handleShuffle.bind(this)
     this._startChangeSlider = this._startChangeSlider.bind(this)
     this._endChangeSlider = this._endChangeSlider.bind(this)
 
@@ -129,8 +132,18 @@ class Player extends Component {
     if(this.props.repeatSelector.single){
       this._onPlay()
     }else if(this.props.repeatSelector.all){
-      let videoInfo = this._getNextSongVideoId()
-      this.props.fetchSelectedSong(videoInfo.videoId, videoInfo.trimTitle)
+      let videoInfo = {}
+      if(this.props.playlistItems){
+        if(this.state.isShuffle){
+          videoInfo = this._getRandomVideoId()
+        }else{
+          videoInfo = this._getNextSongVideoId()
+        }
+        this.props.fetchSelectedSong(videoInfo.videoId, videoInfo.trimTitle)
+      }else{
+        console.log("no playlist item, so we play current song")
+        this._onPlay()
+      }
     }else{
       this.props.controlPlayFromIcon("done")
     }
@@ -202,12 +215,33 @@ class Player extends Component {
     return {videoId, trimTitle}
   }
 
+  _getRandomVideoId(){
+    let videoId = '', title = '', trimTitle = '', tempTrack = 0
+    tempTrack = random(0,this.props.playlistResults.length-1)
+    if(tempTrack !== this.state.currentSongIdx){
+      videoId = this.props.playlistResults[tempTrack].snippet.resourceId.videoId
+      title = this.props.playlistResults[tempTrack].snippet.title
+      trimTitle = title.replace(/\[.*?\]|《.*?》|@(.*)|\(.*?\)|\|(.*)|(\s?)MV(\s?)/g,"")
+      this.setState({ currentSongIdx : tempTrack })
+    }else{
+      console.log("same")
+      return this._getRandomVideoId()
+    }
+    return {videoId, trimTitle}
+  }
+
   // Toggle 3 icon buttons using state.
   _handleRepeat(){
     let counter = this.state.repeatCounter
     counter = counter !== 3 ? counter + 1 : 1
     this.setState({ repeatCounter: counter})
     this.props.playerRepeatSelector(counter)
+  }
+
+  _handleShuffle(){
+    this.setState(prevState => ({
+      isShuffle : !prevState.isShuffle
+    }))
   }
 
 
@@ -226,10 +260,10 @@ class Player extends Component {
   // Function to control Skip buttons from the Custom Player
   _handleTrack(direction){
     this.props.controlPlayFromIcon("pause")
-
+    let videoInfo = {}
     if(this.props.playlistResults){
       if( this.props.playlistResults.length > 0) {
-        let videoInfo = {}
+
         if(direction === 'prev'){
           videoInfo = this._getPrevSongVideoId()
         }else{
@@ -237,7 +271,7 @@ class Player extends Component {
         }
         this.props.fetchSelectedSong(videoInfo.videoId, videoInfo.trimTitle)
       }else{
-        console.log("no playlist available")
+        console.log("no playlist item")
       }
     }else{
       console.log("no playlist initialized")
@@ -276,7 +310,7 @@ class Player extends Component {
 
   render(){
 
-    const {  selectedSongId, playingState, repeatSelector } = this.props
+    const {  selectedSongId, playingState, repeatSelector, playlistResults } = this.props
     const {  songDuration, songTitle, currentPosition, isSliderChanged, seekValue } = this.state
     let opts = {
       width:0,
@@ -304,6 +338,9 @@ class Player extends Component {
           sliderChangeEnd = { this._endChangeSlider }
           sliderState = { isSliderChanged }
           sliderValueWhileChanging = { seekValue }
+          shuffleControl = { this._handleShuffle }
+          shuffleState = { this.state.isShuffle }
+          isPlaylistAvailable = { playlistResults.length > 0 ? true : false}
         />
         <YouTube
           videoId={selectedSongId}
@@ -320,14 +357,14 @@ class Player extends Component {
 }
 
 const mapStateToProps = state => {
-  console.log(state)
   return{
     selectedSongId : state.fetchSong.songID,
     selectedSongTitle : state.fetchSong.songTitle,
     controlFromIcon : state.controlPlayer,
     playingState : state.fetchPlayingState,
     repeatSelector : state.getPlayerRepeat,
-    playlistResults : state.dataFetch.playlistResults.items
+    playlistResults : state.dataFetch.playlistResults.items,
+    results : state.dataFetch.results,
   }
 }
 

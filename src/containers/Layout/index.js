@@ -3,9 +3,10 @@ import React, { Component } from 'react'
 import G_logo from 'assets/images/google.png'
 import { auth,  g_config, db } from 'config'
 
-import { getUserInfo, userLogout, getUserToken, initPlaylistForUser, fetchPlaylistID, fetchItemsFromPlaylist } from 'actions'
+import { getUserInfo, userLogout, getUserToken, initPlaylistForUser, fetchPlaylistID, fetchItemsFromPlaylist,dataReset } from 'actions'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
+
 
 import { withStyles } from '@material-ui/core/styles'
 import Drawer from '@material-ui/core/Drawer'
@@ -14,7 +15,6 @@ import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
 import IconButton from '@material-ui/core/IconButton'
 import Hidden from '@material-ui/core/Hidden'
-import MenuIcon from '@material-ui/icons/Menu'
 import Button from '@material-ui/core/Button'
 import Avatar from '@material-ui/core/Avatar'
 import ClickAwayListener from '@material-ui/core/ClickAwayListener'
@@ -22,6 +22,10 @@ import Grow from '@material-ui/core/Grow'
 import Paper from '@material-ui/core/Paper'
 import MenuItem from '@material-ui/core/MenuItem'
 import MenuList from '@material-ui/core/MenuList'
+
+import PlaylistIcon from '@material-ui/icons/QueueMusic'
+import BackIcon from '@material-ui/icons/ArrowBack'
+import SwipeableDrawer from '@material-ui/core/SwipeableDrawer'
 
 import ExpansionPlaylist from 'components/ExpansionPlaylist'
 
@@ -70,6 +74,9 @@ const styles = theme => ({
   },
   flex : {
     flex: 1
+  },
+  playlist_toolbar : {
+    flexDirection : 'row-reverse'
   },
   avatar: {
     width:20,
@@ -127,6 +134,7 @@ class Layout extends Component {
 
   //
   _createPlaylist = () => {
+    console.log("create pl")
     this.props.initPlaylistForUser()
   }
 
@@ -155,7 +163,6 @@ class Layout extends Component {
   _handleSignIn(){
     if (window.gapi.auth2.getAuthInstance().isSignedIn.get() !== true) {
       window.gapi.auth2.getAuthInstance().signIn()
-      .then(()=>this._setSigninStatus())
     }
   }
 
@@ -186,6 +193,7 @@ class Layout extends Component {
 
   // Function to check user status, save user info to firestore and get access token for other api services
   _setSigninStatus(){
+    // console.log("fire? 1")
     // get currently signed in user from google auth
     let user = window.gapi.auth2.getAuthInstance().currentUser.get()
 
@@ -203,36 +211,47 @@ class Layout extends Component {
       let fireUser = auth().currentUser
       // if no signed in user in firebase auth system,
       if(!fireUser){
-        console.log("does this function fire after logout?")
+        // console.log("fire? 21")
         // Sign in the user using the credential created above
         auth().signInAndRetrieveDataWithCredential(credentials)
         .then((user)=> {
           // After successfully signed in, pass the access token to store.
           // This token is from google auth, not from firebase.
-          this.props.getUserToken(authResponse.access_token)
+          // this.props.getUserToken(authResponse.access_token)
 
           // Check if user id is in the firestore. If the ID does not exist,
           // create one in the firestore
-          let docRef = db.collection("user").doc(user.user.uid)
+          var docRef = db.collection("user").doc(user.user.uid)
           docRef.get().then((doc)=>{
-            if(!doc.exists){
-              docRef.set({
-                id:user.user.uid
-              })
-              console.log("user id dne, create one")
+            if(doc.exists){
+              console.log("user doc exists")
+              if(doc.data().pid){
+                // console.log("user pid ex, exec")
+                this.props.fetchPlaylistID(doc.data().pid)
+                this.props.fetchItemsFromPlaylist(doc.data().pid)
+              }else{
+                this._createPlaylist()
+              }
+
             }else{
               // If user exists, then check if there is a playlist ID for this user.
               // If ID exists, pass it to the store
-              if(doc.data().pid){
-                this.props.fetchPlaylistID(doc.data().pid)
-              }
+              console.log("user id DNE, create one")
+              docRef.set({
+                id:user.user.uid
+              })
+
+              // .then(()=>console.log("user id created, create one"))
             }
           })
+          .then(()=>this.props.getUserToken(authResponse.access_token))
           .catch((err) => console.error("Error adding document: ", err))
         })
       }else{
+        // console.log('this?')
         // if the user is already logged in, get access token for google api services
         this.props.getUserToken(authResponse.access_token)
+        this.props.fetchItemsFromPlaylist(this.props.userPlaylistId)
       }
     }else{
       console.log("No User, No Authorized")
@@ -245,9 +264,9 @@ class Layout extends Component {
   // True - some changes in the current user sign-in session
   // False - no changes
   _updateSignInStatus = (val) => {
-    console.log("_updateSignInStatus fires")
-    console.log("sign in state changed ", val)
-    if(val === true){
+    // console.log("_updateSignInStatus fires")
+    // console.log("sign in state changed ", val)
+    if(val){
       this._setSigninStatus()
     }
   }
@@ -258,7 +277,7 @@ class Layout extends Component {
 
   _handleSignOut(event){
     //remove playlist when the user signs out
-    this.props.fetchPlaylistID('')
+    this.props.dataReset(2)
     window.gapi.auth2.getAuthInstance().signOut()
     .then(()=>{
       auth().signOut()
@@ -270,18 +289,23 @@ class Layout extends Component {
   // Check if the current playlist ID is in the DB, then send this ID to the store
   componentDidUpdate(prevProps){
     const { userPlaylistId, userState } = this.props
-
+    // console.log(prevProps.userPlaylistId)
     if(prevProps.userPlaylistId !== userPlaylistId){
+      // console.log(prevProps.userPlaylistId)
+      // console.log(userPlaylistId)
+      // console.log("DIFF!!")
       if(userPlaylistId !== ''){
+        // console.log("ANd NOT EMPTY")
         this._updateDBwithUserPlaylistId(userState.uid, userPlaylistId)
         this.props.fetchItemsFromPlaylist(userPlaylistId)
       }
     }
   }
 
+
   // DB Update function
   _updateDBwithUserPlaylistId(userID, playlistId){
-
+    console.log("this fires")
     // Check if DB has a document named userID
     let docRef = db.collection("user").doc(userID)
     docRef.get().then((doc)=>{
@@ -292,12 +316,13 @@ class Layout extends Component {
           if(doc.data().pid === playlistId){
             console.log("user playlist id is already in the database")
           }else{
+            console.log("this fires 22")
             // If not matched, or does not exist,
             // store the playlist ID in the DB
             docRef.update({
               pid : playlistId
             })
-            // console.log("user playlist saved in the database")
+            console.log("user playlist saved in the database")
           }
         }else{
           console.log("user data exists, but userID doesnt match with the current User")
@@ -306,7 +331,7 @@ class Layout extends Component {
         console.log("This user data is not in the database.")
       }
     })
-    // .then(()=> console.log("udpate done"))
+    // .then(()=> console.log("update done"))
     .catch((err) => console.error("Error adding document: ", err))
   }
 
@@ -314,11 +339,16 @@ class Layout extends Component {
     // Initialize script
     this._initScript()
 
+    // console.log(store)
     // Firebase function to listen to user status.
     this.authenticate = auth().onAuthStateChanged((user) => {
       if(user){
         // console.log("User still exists")
+        // console.log(this.props.userPlaylistId)
+        // this.props.fetchItemsFromPlaylist(this.props.userPlaylistId)
         this.props.getUserInfo(user)
+        // console.log(this.props)
+
       }else{
         this.props.userLogout()
       }
@@ -331,18 +361,31 @@ class Layout extends Component {
   }
 
   render(){
-
-    const { classes, theme, userState, userPlaylistId } = this.props
+    const { classes, userState, userPlaylistId } = this.props
     const { popperOpen }  = this.state
 
     const drawer = (
       <div>
-        <div className={classes.toolbar} />
+        <Toolbar className={classes.playlist_toolbar}>
+          <Hidden mdUp>
+            <IconButton
+              color="inherit"
+              onClick={this._handleDrawerToggle}
+              >
+              <BackIcon />
+            </IconButton>
+          </Hidden>
+        </Toolbar>
+        {/* <div className={classes.toolbar} style={{ border:'1px solid white'}}> */}
+          {/* <Typography style={{ flex:1}}>s</Typography> */}
+
+        {/* </div> */}
         <ExpansionPlaylist
           user={userState}
           playlistCreator = { this._createPlaylist }
           plistId = { userPlaylistId }
-          handleSignin = { this._handleSignIn }/>
+          isLoading = { this.props.isLoading }
+        />
       </div>
     )
 
@@ -356,7 +399,7 @@ class Layout extends Component {
               onClick={this._handleDrawerToggle}
               className={classes.navIconHide}
             >
-              <MenuIcon />
+              <PlaylistIcon />
             </IconButton>
             <Typography variant="title" color="inherit" noWrap className={classes.flex}>
               YourPlayer
@@ -416,10 +459,14 @@ class Layout extends Component {
         </AppBar>
 
         <Hidden mdUp>
-          <Drawer
+          <SwipeableDrawer
+            disableBackdropTransition
+            disableDiscovery
+            swipeAreaWidth={5}
             variant="temporary"
-            anchor={theme.direction === 'rtl' ? 'right' : 'left'}
+            anchor={'left'}
             open={this.state.mobileOpen}
+            onOpen={this._handleDrawerToggle}
             onClose={this._handleDrawerToggle}
             classes={{
               paper: classes.drawerPaper,
@@ -429,7 +476,7 @@ class Layout extends Component {
             }}
           >
             {drawer}
-          </Drawer>
+          </SwipeableDrawer>
         </Hidden>
         <Hidden smDown implementation="css">
           <Drawer
@@ -465,12 +512,14 @@ class Layout extends Component {
 }
 
 const mapStateToProps = (state) => {
+  // console.log(state)
   return{
     userState : state.userRed.user,
-    userPlaylistId : state.playlistIdFetch
+    userPlaylistId : state.pID,
+    isLoading : state.dataLoading
   }
 }
 
-const mapDispatchToProps = { getUserInfo, userLogout, getUserToken, initPlaylistForUser, fetchPlaylistID, fetchItemsFromPlaylist }
+const mapDispatchToProps = { getUserInfo, userLogout, getUserToken, initPlaylistForUser, fetchPlaylistID, fetchItemsFromPlaylist,dataReset }
 
 export default withStyles(styles, { withTheme: true })(connect(mapStateToProps,mapDispatchToProps)(Layout))

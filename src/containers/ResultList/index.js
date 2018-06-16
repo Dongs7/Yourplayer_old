@@ -5,7 +5,7 @@ import find from 'lodash/find'
 
 import DisplayList  from 'components/DisplayList'
 
-import { fetchSelectedSong, controlPlayFromIcon, fetchItemsFromPlaylist, addMusicToList, removeItemFromPlaylist } from 'actions'
+import { fetchSelectedSong, controlPlayFromIcon, fetchItemsFromPlaylist, addMusicToList, removeItemFromPlaylist, fetchData } from 'actions'
 
 class ResultList extends Component {
   constructor(props){
@@ -30,6 +30,7 @@ class ResultList extends Component {
     this._handleModalClose = this._handleModalClose.bind(this)
     this._handleRemoveConfirmed = this._handleRemoveConfirmed.bind(this)
     this._closeToastWindow = this._closeToastWindow.bind(this)
+    this._loadMorePlaylist = this._loadMorePlaylist.bind(this)
   }
 
   // Send selected song ID when the user clicks the song from the result list
@@ -61,7 +62,7 @@ class ResultList extends Component {
 
   // Function to add the selected song to the playlist if the song is not in the playlist
   _handleList(videoId, videoTitle){
-    console.log("this firssss")
+    // console.log("this firssss")
     console.log(this.props.playlistResults)
     if(this.props.playlistResults.length <= 0) {
       this.setState({ isToasterOpen : true, toastContents : {text :'We can\'t access your playlist. Please create or reinitialize the playlist', error: true} })
@@ -107,12 +108,32 @@ class ResultList extends Component {
     this.setState({ isToasterOpen : false })
   }
 
+  _loadMorePlaylist(target){
+    const { userPlaylistId, playlistPageToken, resultPageToken, currentSearchTerm } = this.props
+    if(target === 'playlist'){
+      this.props.fetchItemsFromPlaylist(userPlaylistId, playlistPageToken)
+    }else{
+      this.props.fetchData(currentSearchTerm, resultPageToken)
+    }
+  }
+
   render(){
-    const { results, currentPlayingSong, playingState, forPlaylist, playlistResults } = this.props
+    const { results,
+            playlistTotalItems,
+            currentPlayingSong,
+            playingState,
+            forPlaylist,
+            playlistResults,
+            resultPageToken,
+            playlistPageToken,
+            userPlaylistId,
+            isLoading
+          } = this.props
     return(
       <DisplayList
         isPlaylist = { forPlaylist }
         data={forPlaylist ? playlistResults : results}
+        pageToken = { forPlaylist ? playlistPageToken : resultPageToken }
         selectedSong={this._handleSelectedSong}
         currentPlayingSong = { currentPlayingSong }
         mouseOverOnRow = { this._handleMouseOver }
@@ -129,27 +150,41 @@ class ResultList extends Component {
         toasterState = { this.state.isToasterOpen }
         handleCloseToast = { this._closeToastWindow }
         toastContents = { this.state.toastContents }
+        loadPlaylist = { this._loadMorePlaylist }
+        checkPlaylistStatus = { userPlaylistId }
+        totalNumberofItemsInList = { playlistTotalItems }
+        isLoading = { isLoading }
       />
     )
   }
 }
 
+
+ResultList.defaultProps = {
+  forPlaylist : false,
+  resultPageToken : null,
+  playlistPageToken : null
+}
+
 const mapStateToProps = state => {
-  console.log(state.dataFetch.playlistResults)
+  // console.log(state)
   return{
     results : state.dataFetch.results,
+    resultPageToken : state.dataFetch.results.nextPageToken,
     playlistResults : state.dataFetch.playlistResults,
+    playlistPageToken : state.dataFetch.playlistResults.nextPageToken,
+    playlistTotalItems : state.dataFetch.playlistResults.totalItems,
     currentPlayingSong : state.fetchSong.songID,
     playingState : state.fetchPlayingState,
     user_info : state.userRed,
-    userPlaylistId : state.playlistIdFetch
+    userPlaylistId : state.pID,
+    currentSearchTerm : state.termFetch,
+    isLoading : state.dataLoading
   }
 }
 
-ResultList.defaultProps = {
-  forPlaylist : false
-}
 
-const mapDispatchToProps = { fetchSelectedSong, controlPlayFromIcon, addMusicToList, fetchItemsFromPlaylist, removeItemFromPlaylist }
+
+const mapDispatchToProps = { fetchSelectedSong, controlPlayFromIcon, addMusicToList, fetchItemsFromPlaylist, removeItemFromPlaylist, fetchData }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ResultList)

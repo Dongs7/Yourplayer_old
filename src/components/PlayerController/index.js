@@ -78,6 +78,12 @@ const styles = theme =>({
     }
 
   },
+  shuffleOn: {
+    color:'red'
+  },
+  disabled : {
+    color:'rgba(165, 165, 165, 0.5)'
+  },
    test: {
      // border:'1px solid white',
      flexGrow:1
@@ -98,9 +104,12 @@ const PlayerController = (props) => {
           sliderChangeStart,
           sliderChangeEnd,
           sliderState,
-          sliderValueWhileChanging
+          sliderValueWhileChanging,
+          shuffleControl,
+          shuffleState,
+          isPlaylistAvailable
         } = props
-  // console.log(currentRepeatStatus)
+  // console.log(shuffleState)
   return(
     <div id="controller" className={classes.root}>
 
@@ -110,8 +119,8 @@ const PlayerController = (props) => {
         <div className={classes.playerControl}>
 
             <BottomNavigation className={classes.bn_root}>
-              <BottomNavigationAction className={classes.bn_action } label="shuffle" icon={<ShuffleIcon className={classNames(classes.icons)}/>} />
-              <BottomNavigationAction className={classes.bn_action } label="prevSkip" icon={<SkipPrevIcon className={classNames(classes.icons)} onClick={()=>changeTrack('prev') }/>} />
+              <BottomNavigationAction className={classes.bn_action } label="shuffle" icon={<ShuffleIcon className={classNames(classes.icons,{[classes.shuffleOn] : shuffleState})} onClick={shuffleControl} />} />
+              <BottomNavigationAction className={classes.bn_action } disabled={isPlaylistAvailable ? false : true} label="prevSkip" icon={<SkipPrevIcon className={classNames(classes.icons,{[classes.disabled] : !isPlaylistAvailable})} onClick={()=>changeTrack('prev') }/>} />
               <BottomNavigationAction className={classes.bn_action } label="play_pause"
                 icon={
                       playState ?
@@ -119,7 +128,7 @@ const PlayerController = (props) => {
                       :
                       <PlayIcon className={classNames(classes.icons)} onClick={()=>controlFromPlayer("play")}/>
                      } />
-              <BottomNavigationAction className={classes.bn_action } label="nextSkip" icon={<SkipNextIcon className={classNames(classes.icons)} onClick={()=>changeTrack('next') }/>} />
+              <BottomNavigationAction className={classes.bn_action } disabled={isPlaylistAvailable ? false : true} label="nextSkip" icon={<SkipNextIcon className={classNames(classes.icons,{[classes.disabled] : !isPlaylistAvailable})} onClick={()=>changeTrack('next') }/>} />
               <BottomNavigationAction className={classes.bn_action } label="repeator"
                 icon={
                           ((currentRepeatStatus.norepeat || currentRepeatStatus.all) &&
