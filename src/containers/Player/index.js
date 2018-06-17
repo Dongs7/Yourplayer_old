@@ -14,13 +14,11 @@ class Player extends Component {
     super(props)
     this.state = {
       player:{},
-      // isPlaying : false,
       songDuration : 0,
       songTitle : '',
       currentPosition : 0,
       repeatCounter : 1,
       currentSongIdx : 0,
-      // toastOpen : false
       isSliderChanged : false,
       seekValue : 0,
       isShuffle : false
@@ -152,7 +150,7 @@ class Player extends Component {
   // Handle custom Player using Youtube iframe state data
   _onStateChange(e) {
     clearInterval(this.timer)
-    console.log(e.data + ' State Value ')
+    // console.log(e.data + ' State Value ')
 
     // 5 - Video Cued
     if(e.data === 5){
@@ -224,7 +222,7 @@ class Player extends Component {
       trimTitle = title.replace(/\[.*?\]|《.*?》|@(.*)|\(.*?\)|\|(.*)|(\s?)MV(\s?)/g,"")
       this.setState({ currentSongIdx : tempTrack })
     }else{
-      console.log("same")
+      // console.log("same")
       return this._getRandomVideoId()
     }
     return {videoId, trimTitle}

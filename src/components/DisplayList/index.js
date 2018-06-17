@@ -3,6 +3,7 @@ import React from 'react'
 import { withStyles } from '@material-ui/core/styles'
 import classNames from 'classnames'
 import Grid from '@material-ui/core/Grid'
+import CircularProgress from '@material-ui/core/CircularProgress'
 import Typography from '@material-ui/core/Typography'
 import Badge from '@material-ui/core/Badge'
 import Button from '@material-ui/core/Button'
@@ -18,13 +19,13 @@ import Avatar from '@material-ui/core/Avatar';
 
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
+import ListItemIcon from '@material-ui/core/ListItemIcon'
+import ListItemText from '@material-ui/core/ListItemText'
 
 import DeleteModal from 'components/DeleteModal'
 import Toast from 'components/Toast'
 
-const animationId = 'pulse'
+const pulse = 'pulse'
 
 const styles = theme => ({
   root : {
@@ -50,7 +51,7 @@ const styles = theme => ({
     whiteSpace:'nowrap',
     [theme.breakpoints.down("767")]:{
       fontSize : 13
-    }
+    },
   },
   playlist_title : {
     color:'#ddd',
@@ -88,7 +89,6 @@ const styles = theme => ({
     color:'#ddd',
     borderRadius: '50%',
     boxShadow: '0 0 0 rgba(220,20,60, 0.4)',
-    // animation:'pulse 2s infinite'
   },
   hiddenIcon:{
     visibility:'hidden'
@@ -101,11 +101,19 @@ const styles = theme => ({
   noresult_listitem:{
     justifyContent:'center'
   },
-  [`@keyframes ${animationId}`]: {
+  item_on_hover:{
+    '&:hover':{
+      color: theme.palette.primary.main
+    }
+  },
+  [`@keyframes ${pulse}`]: {
     '0%': {boxShadow: '0 0 0 rgba(255,255,255, 0.4)'},
     '70%': {boxShadow: '0 0 50px rgba(255,255,255, 0.9)'},
     '100%' : {boxShadow: '0 0 0 rgba(255,255,255, 0.4)'}
   },
+  load_button_wrapper : {
+    textAlign : 'center'
+  }
 
 })
 
@@ -131,11 +139,11 @@ const DisplayList = (props) => {
           toastContents,
           pageToken,
           loadPlaylist,
-          checkPlaylistStatus,
           totalNumberofItemsInList,
-          isLoading
+          isLoading,
+          isError
          } = props
-  // console.log(checkPlaylistStatus)
+
   return(
     <div className={classes.root}>
       {
@@ -182,24 +190,26 @@ const DisplayList = (props) => {
                 </ListItem>
               }
 
-              {
 
-                data.items.length <= 0 ?
+
+              {
+                data.items.length === 0 ?
                 <ListItem className={classes.noresult_listitem}>
                   {
                     isPlaylist ?
                       isLoading ?
-                      <Typography style={{ color:'#ddd', fontSize:77}}>Loading playlist..</Typography>
+                      <CircularProgress className={classes.progress} color="primary" thickness={7}/>
                       :
-                      checkPlaylistStatus !== '' ?
-                      <Typography style={{ color:'#ddd', fontSize:22}}>Your list is empty! Add your favorite songs now!</Typography>
-                      :
-                      <Typography style={{ color:'#ddd', fontSize:15}}>Fail to fetch items from the playlist. If this is your first time using this player, we'll create the playlist for you. Otherwise, we'll reload your playlist. Click the button below to solve problems.</Typography>
-                      // checkPlaylistStatus !== '' ?
-                      //   <Typography style={{ color:'#ddd', fontSize:15}}>No Songs in your playlist</Typography>
-                      //   :
-                      //   <Typography style={{ color:'#ddd', fontSize:15}}>Fail to fetch items from the playlist. If this is your first time using this player, we'll create the playlist for you. Otherwise, we'll reload your playlist. Click the button below to solve problems.</Typography>
-
+                        isError.isError ?
+                        <Typography style={{ color:'#ddd', fontSize:22}}>
+                          {isError.errMsg === 4 || isError.errMsg === 99?
+                            `It seems like you haven't create your YouTube channel yet. In order to make a playlist, you need to create an youtube channel first.`
+                            :
+                            `Something happened while fetching your playlist.`
+                          }
+                        </Typography>
+                        :
+                        <Typography style={{ color:'#ddd', fontSize:22}}>Your list is empty! Add your favorite songs now!</Typography>
                     :
                     <Typography style={{ color:'#ddd', fontSize:44}}>No Search Results</Typography>
                   }
@@ -214,13 +224,8 @@ const DisplayList = (props) => {
                   let trimTitle = longtitle.replace(/\[.*?\]|《.*?》|@(.*)|\(.*?\)|\|(.*)|(\s?)MV(\s?)/g,"")
                   return(
 
-                      <ListItem divider button key={videoId} id={videoId} onMouseOver={(e)=>mouseOverOnRow(e,videoId)} onMouseLeave={mouseLeaveOnRow}>
+                      <ListItem divider button key={videoId} id={videoId} onMouseOver={(e)=>mouseOverOnRow(e,videoId)} onMouseLeave={mouseLeaveOnRow} className={classes.item_on_hover}>
                         {
-                          // isPlaylist ?
-                          // <ListItemIcon className={classes.button} aria-label="remove" color="secondary">
-                          //   <RemoveIcon id={n.id} className={classNames(classes.removeIcon,classes.icon_pointer, {[classes.removeIcon_rotate] : checkRemoveID === n.id })} onClick={ removeItem }/>
-                          // </ListItemIcon>
-                          // :
                            mouseState === videoId ?
                               currentPlayingSong === videoId ?
                                 playingState ?
@@ -246,7 +251,7 @@ const DisplayList = (props) => {
                           </ListItemIcon>
 
                         }
-                        <ListItemText disableTypography className={classes.result_title} primary={trimTitle} onClick={()=>selectedSong(videoId,trimTitle)} />
+                        <ListItemText disableTypography  className={classes.result_title} primary={trimTitle} onClick={()=>selectedSong(videoId,trimTitle)} />
                       {
                         !isPlaylist ?
                         <ListItemIcon className={classes.button} onClick={()=>addItemToList(videoId, trimTitle)}>
@@ -263,19 +268,22 @@ const DisplayList = (props) => {
               }
 
             </List>
+            <div className={classes.load_button_wrapper}>
             {
               pageToken ?
                 isPlaylist ?
-                <Button fullWidth variant="raised" onClick={()=>loadPlaylist("playlist") }>
-                  LOAD MORE PLAYLIST
-                </Button>
-                :
-                <Button fullWidth variant="raised" onClick={()=>loadPlaylist("results") }>
-                  LOAD MORE RESULTS
-                </Button>
+                  <Button  variant="outlined" onClick={()=>loadPlaylist("playlist") }>
+                    LOAD MORE PLAYLIST
+                  </Button>
+                  :
+                  <Button  variant="raised" color="primary" onClick={()=>loadPlaylist("results") }>
+                    LOAD MORE RESULTS
+                  </Button>
+
               :
               ''
             }
+            </div>
 
           </Grid>
         </Grid>

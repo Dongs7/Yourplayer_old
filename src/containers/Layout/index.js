@@ -3,7 +3,16 @@ import React, { Component } from 'react'
 import G_logo from 'assets/images/google.png'
 import { auth,  g_config, db } from 'config'
 
-import { getUserInfo, userLogout, getUserToken, initPlaylistForUser, fetchPlaylistID, fetchItemsFromPlaylist,dataReset } from 'actions'
+import { getUserInfo,
+         userLogout,
+         getUserToken,
+         initPlaylistForUser,
+         fetchPlaylistID,
+         fetchItemsFromPlaylist,
+         dataReset,
+         dataLoading,
+         createChannel,
+         dataError } from 'actions'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 
@@ -120,6 +129,7 @@ class Layout extends Component {
       mobileOpen : false,
       popperOpen : false,
       user : {},
+      createButtonClicked : false
     }
 
     this._handleSignIn = this._handleSignIn.bind(this)
@@ -129,12 +139,12 @@ class Layout extends Component {
     this._createPlaylist = this._createPlaylist.bind(this)
     this._updateSignInStatus = this._updateSignInStatus.bind(this)
     this._updateDBwithUserPlaylistId = this._updateDBwithUserPlaylistId.bind(this)
+    this._createChannel = this._createChannel.bind(this)
 
   }
 
-  //
+  // initiallize playlist
   _createPlaylist = () => {
-    console.log("create pl")
     this.props.initPlaylistForUser()
   }
 
@@ -195,6 +205,7 @@ class Layout extends Component {
   _setSigninStatus(){
     // console.log("fire? 1")
     // get currently signed in user from google auth
+    this.props.dataLoading(true)
     let user = window.gapi.auth2.getAuthInstance().currentUser.get()
 
     // check if the current user is authorized to use the service
@@ -218,66 +229,71 @@ class Layout extends Component {
           // After successfully signed in, pass the access token to store.
           // This token is from google auth, not from firebase.
           // this.props.getUserToken(authResponse.access_token)
-
+          this.props.getUserToken(authResponse.access_token)
           // Check if user id is in the firestore. If the ID does not exist,
           // create one in the firestore
           var docRef = db.collection("user").doc(user.user.uid)
           docRef.get().then((doc)=>{
             if(doc.exists){
-              console.log("user doc exists")
+              // console.log("user doc exists")
               if(doc.data().pid){
                 // console.log("user pid ex, exec")
                 this.props.fetchPlaylistID(doc.data().pid)
-                this.props.fetchItemsFromPlaylist(doc.data().pid)
+                // this.props.fetchItemsFromPlaylist(doc.data().pid)
               }else{
+                // No playlist Id found, create one
                 this._createPlaylist()
               }
 
             }else{
               // If user exists, then check if there is a playlist ID for this user.
               // If ID exists, pass it to the store
-              console.log("user id DNE, create one")
+              // console.log("user id DNE, create one")
               docRef.set({
                 id:user.user.uid
+              }).then(()=>{
+                // console.log("user id created, pid creating..")
+                this._createPlaylist()
               })
-
-              // .then(()=>console.log("user id created, create one"))
             }
           })
-          .then(()=>this.props.getUserToken(authResponse.access_token))
+          .then(()=>{
+            // console.log("user created,pid crated set signin pass")
+
+          })
           .catch((err) => console.error("Error adding document: ", err))
         })
       }else{
-        // console.log('this?')
         // if the user is already logged in, get access token for google api services
         this.props.getUserToken(authResponse.access_token)
         this.props.fetchItemsFromPlaylist(this.props.userPlaylistId)
       }
     }else{
-      console.log("No User, No Authorized")
+      console.log("No USER")
     }
   }
 
 
-  // Google auth lister function.
-  // Parameter returns boolean.
-  // True - some changes in the current user sign-in session
-  // False - no changes
+
+  /**
+   * Google auth lister function
+   * @param {boolean} [val = true, false] - true if user's login status has changed, false otherwise
+   */
   _updateSignInStatus = (val) => {
-    // console.log("_updateSignInStatus fires")
-    // console.log("sign in state changed ", val)
     if(val){
       this._setSigninStatus()
     }
   }
 
 
-  // Sign out user.
-  // Sign out from google auth, then firebase.
-
-  _handleSignOut(event){
-    //remove playlist when the user signs out
+  /**
+   * Sign-Out from both Google Auth and Firebase
+   * @param {}
+   */
+  _handleSignOut(){
+    //reset playlist when the user signs out
     this.props.dataReset(2)
+    this.props.fetchPlaylistID('')
     window.gapi.auth2.getAuthInstance().signOut()
     .then(()=>{
       auth().signOut()
@@ -285,27 +301,35 @@ class Layout extends Component {
   }
 
 
-  // If previous user's playlist ID is different than current user's playlist ID
-  // Check if the current playlist ID is in the DB, then send this ID to the store
+  /**
+   * Update playlist ID if current ID is different than the previous one
+   * Set createButtonClicked state false if there is an error and prev button state is true
+   * @param {object} prevProps - values of previous props
+   */
   componentDidUpdate(prevProps){
+
+    if(this.state.createButtonClicked && this.props.isError.isError){
+      if(this.props.isError.errMsg === 4){
+        this.setState({ createButtonClicked : false })
+      }
+    }
+
     const { userPlaylistId, userState } = this.props
-    // console.log(prevProps.userPlaylistId)
     if(prevProps.userPlaylistId !== userPlaylistId){
-      // console.log(prevProps.userPlaylistId)
-      // console.log(userPlaylistId)
-      // console.log("DIFF!!")
       if(userPlaylistId !== ''){
-        // console.log("ANd NOT EMPTY")
         this._updateDBwithUserPlaylistId(userState.uid, userPlaylistId)
-        this.props.fetchItemsFromPlaylist(userPlaylistId)
       }
     }
   }
 
 
-  // DB Update function
+  /**
+   * Check if playlist ID exists in the database. Update playlist ID if not.
+   * @param {string} userID - currently signed in user id
+   * @param {string} playlistId - currently signed in user's playlist id
+   */
   _updateDBwithUserPlaylistId(userID, playlistId){
-    console.log("this fires")
+    console.log("_updateDBwithUserPlaylistId fires")
     // Check if DB has a document named userID
     let docRef = db.collection("user").doc(userID)
     docRef.get().then((doc)=>{
@@ -316,7 +340,7 @@ class Layout extends Component {
           if(doc.data().pid === playlistId){
             console.log("user playlist id is already in the database")
           }else{
-            console.log("this fires 22")
+            console.log("user playlist id isnt already in the database")
             // If not matched, or does not exist,
             // store the playlist ID in the DB
             docRef.update({
@@ -331,8 +355,22 @@ class Layout extends Component {
         console.log("This user data is not in the database.")
       }
     })
-    // .then(()=> console.log("update done"))
+    .then(()=> {
+      this.props.fetchItemsFromPlaylist(playlistId)})
     .catch((err) => console.error("Error adding document: ", err))
+  }
+
+  /**
+   * Create Youtube Channel
+   * @param {int} [type : [1 - Open link, 2 - Call API to get playlist]]
+   */
+  _createChannel(type){
+    if (type === 1){
+      this.setState({ createButtonClicked : true })
+      this.props.createChannel(1)
+    }else{
+      this.props.createChannel(2)
+    }
   }
 
   componentDidMount(){
@@ -343,12 +381,8 @@ class Layout extends Component {
     // Firebase function to listen to user status.
     this.authenticate = auth().onAuthStateChanged((user) => {
       if(user){
-        // console.log("User still exists")
-        // console.log(this.props.userPlaylistId)
-        // this.props.fetchItemsFromPlaylist(this.props.userPlaylistId)
+        this.props.dataLoading(true)
         this.props.getUserInfo(user)
-        // console.log(this.props)
-
       }else{
         this.props.userLogout()
       }
@@ -361,8 +395,14 @@ class Layout extends Component {
   }
 
   render(){
-    const { classes, userState, userPlaylistId } = this.props
-    const { popperOpen }  = this.state
+    console.log('create button clicked if true showing reload button now', this.state.createButtonClicked)
+    const { classes,
+            userState,
+            // userPlaylistId,
+            isError,
+            // isLoading
+          } = this.props
+    const { popperOpen, createButtonClicked }  = this.state
 
     const drawer = (
       <div>
@@ -376,15 +416,15 @@ class Layout extends Component {
             </IconButton>
           </Hidden>
         </Toolbar>
-        {/* <div className={classes.toolbar} style={{ border:'1px solid white'}}> */}
-          {/* <Typography style={{ flex:1}}>s</Typography> */}
 
-        {/* </div> */}
         <ExpansionPlaylist
           user={userState}
-          playlistCreator = { this._createPlaylist }
-          plistId = { userPlaylistId }
-          isLoading = { this.props.isLoading }
+          // playlistCreator = { this._createPlaylist }
+          // plistId = { userPlaylistId }
+          // isLoading = { isLoading }
+          isError = { isError }
+          createChannel = { this._createChannel }
+          createButtonState = { createButtonClicked }
         />
       </div>
     )
@@ -516,10 +556,11 @@ const mapStateToProps = (state) => {
   return{
     userState : state.userRed.user,
     userPlaylistId : state.pID,
-    isLoading : state.dataLoading
+    isLoading : state.dataLoading,
+    isError : state.dataError
   }
 }
 
-const mapDispatchToProps = { getUserInfo, userLogout, getUserToken, initPlaylistForUser, fetchPlaylistID, fetchItemsFromPlaylist,dataReset }
+const mapDispatchToProps = { getUserInfo,dataError,createChannel, userLogout, getUserToken, initPlaylistForUser, fetchPlaylistID, fetchItemsFromPlaylist,dataReset,dataLoading }
 
 export default withStyles(styles, { withTheme: true })(connect(mapStateToProps,mapDispatchToProps)(Layout))

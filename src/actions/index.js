@@ -11,7 +11,6 @@ export const getUserInfo = (user) =>{
 }
 
 export const getUserToken = (token) =>{
-  // console.log("token fires")
   return{
     type: actionTypes.USER_TOKEN,
     token
@@ -24,20 +23,34 @@ export const userLogout = () =>{
   }
 }
 
-const dataLoading = (bool) =>{
+
+/**
+ * @param {boolean} [bool = true, false] - true if loading, false otherwise
+ */
+export const dataLoading = (bool) =>{
   return{
     type: actionTypes.FETCH_LOADING,
-    isLoading : bool
+    bool
   }
 }
 
-export const dataError = (bool) =>{
+/**
+ * @param {boolean} [bool = true, false] - true if error, false otherwise
+ * @param {int} [msg : [4 - No channel found], [99 -  Error, but resolving in progress]] - type of error messages
+ */
+export const dataError = (bool, msg) =>{
   return{
     type: actionTypes.FETCH_ERROR,
-    fetchError : bool
+    bool,
+    msg
   }
 }
 
+
+/**
+ * @param {object} data - data received from API
+ * @param {int} [resultType : [1 - search result], [2 -  playlist result]] - type of results
+ */
 export const dataSuccess = (data, resultType) =>{
   return{
     type: actionTypes.FETCH_SUCCESS,
@@ -46,6 +59,9 @@ export const dataSuccess = (data, resultType) =>{
   }
 }
 
+/**
+ * @param {int} [resultType : [1 - reset search result], [2 - reset playlist result]] - type of resets
+ */
 export const dataReset = (target) =>{
   return{
     type: actionTypes.RESET_DATA,
@@ -59,6 +75,10 @@ export const fetchMoreBegin = () =>{
   }
 }
 
+/**
+ * @param {object} data - data received from API
+ * @param {int} [resultType : [1 - reset search result], [2 - reset playlist result]] - type of resets
+ */
 export const fetchMore = (data, resultType) =>{
   return{
     type: actionTypes.FETCH_MORE,
@@ -67,6 +87,9 @@ export const fetchMore = (data, resultType) =>{
   }
 }
 
+/**
+ * @param {string} term - search term
+ */
 export const fetchTerm = (term) =>{
   return{
     type: actionTypes.FETCH_TERM,
@@ -74,16 +97,12 @@ export const fetchTerm = (term) =>{
   }
 }
 
-export function errorAfterFiveSeconds() {
-  return(dispatch)=>{
-    setTimeout(()=>{
-      dispatch(dataError(true))
-    }, 5000)
-  }
-}
-
+/**
+ * Search Youtube Video from given search term
+ * @param {string} term - search term
+ * @param {string} token - next pageToken if exists
+ */
 export const fetchData = (term,token) => (dispatch, getState) => {
-  // console.log("fetchdata init")
   dispatch(fetchTerm(term))
 
   let pageToken  = ''
@@ -95,8 +114,6 @@ export const fetchData = (term,token) => (dispatch, getState) => {
       pageToken = `&pageToken=${token}`
     }
 
-
-
     const url = "https://www.googleapis.com/youtube/v3/search?part=snippet&"
     let query = `q=${term}`
     const url_numQuery = "&maxResults="
@@ -104,7 +121,6 @@ export const fetchData = (term,token) => (dispatch, getState) => {
     const topidId = "&topicId=/m/04rlf"
     const videoCategoryId = "&videoCategoryId=10"
     const url_postFix = "&type=video&key="
-    // let pageToken = "&pageToken="
 
     let searchUrl = url + query + url_numQuery + maxNum + topidId + videoCategoryId + url_postFix + API_KEY
 
@@ -112,19 +128,14 @@ export const fetchData = (term,token) => (dispatch, getState) => {
       searchUrl +=  pageToken
     }
 
-    // console.log("before axios")
     axios.get(searchUrl)
       .then((res) => {
-
         if(!res.status === 200){
           throw Error(res.statusText)
         }
-        // console.log(res)
-
         return res
       })
       .then((res) => {
-        // console.log("dataSuccess call ", res)
         if(token){
           dispatch(fetchMore(res.data, 1))
         }else{
@@ -137,8 +148,11 @@ export const fetchData = (term,token) => (dispatch, getState) => {
 }
 
 
-// SELECTED Song
-
+/**
+ * Get Video ID and Title on the selected song
+ * @param {string} song_Id - Video ID
+ * @param {string} song_Title - Video Title (trimmed)
+ */
 export const fetchSelectedSong = (song_Id, song_Title) => {
   return {
     type : actionTypes.FETCH_SONG,
@@ -149,6 +163,10 @@ export const fetchSelectedSong = (song_Id, song_Title) => {
   }
 }
 
+/**
+ * Get player's behavior when users click the button in the player
+ * @param {string} [control_type : play, pause, done, repeatAll,.]
+ */
 export const controlPlayFromIcon = (control_type) => {
   return {
     type : actionTypes.CONTROL_FROM_ICON,
@@ -156,6 +174,10 @@ export const controlPlayFromIcon = (control_type) => {
   }
 }
 
+/**
+ * Get player's current State
+ * @param {boolean} [bool : true, false] - true when playing, false otherwise
+ */
 export const fetchPlayingState = (bool) => {
   return {
     type : actionTypes.FETCH_PLAYING_STATE,
@@ -163,44 +185,54 @@ export const fetchPlayingState = (bool) => {
   }
 }
 
-// Actions related to playlist
-
+/**
+ * Initialize player's playlist
+ * @param {}
+ */
 export const initPlaylistForUser = () => (dispatch, getState) => {
+
   // Retrieve access token for api service from redux store
     const token = getState().userRed.token
+    // console.log(token)
     let app_playlistId = ''
     const url = `https://www.googleapis.com/youtube/v3/playlists?access_token=${token}&part=snippet&mine=true`
     if(token){
       axios.get(url)
         .then((res)=>{
 
-          // console.log("check if user has YOURPLAYER_PLIST playlist,");
-          // console.log("step 1")
+          // Check if the user has any playlists
           if(res.data.items.length > 0){
-            // console.log("step 2 if length is > 0")
-            if(checkPlaylist(res.data.items) !== ''){
-              // console.log("list found")
+            // user already has playlists. find the playlist named YOURPLAYER_PLIST
+            if(checkPlaylist(res.data.items) !== null){
+              // Found the playlist
               app_playlistId = checkPlaylist(res.data.items)
               dispatch(fetchPlaylistID(app_playlistId))
             }else{
-              // console.log("list not found")
+              // No playlist named YOURPLAYER_PLIST
+              // Create one
               createPlayList().then((res)=>{
                 app_playlistId = res
                 dispatch(fetchPlaylistID(app_playlistId))
+              }).catch((err)=>{
+                console.log(err)
+                dispatch(dataError(true))
               })
-                // console.log("step 3 and after create ", app_playlistId)
             }
 
           }else{
-              // console.log("dne and length s 0, create list first")
               createPlayList().then((res)=>{
                 app_playlistId = res
                 dispatch(fetchPlaylistID(app_playlistId))
+              }).catch((err)=>{
+                dispatch(dataError(true))
               })
           }
-          // console.log(app_playlistId)
         })
-        .catch((err)=>console.log(err, ' fetch error!'))
+        .catch((err)=>{
+          // Error occurs when there's no youtube channel
+          dispatch(dataLoading(false))
+          dispatch(dataError(true,4))
+        })
 
     }else{
       console.log("user not logged in or fail to retrieve token for api service")
@@ -209,7 +241,11 @@ export const initPlaylistForUser = () => (dispatch, getState) => {
 
 
 
-// Promise function to create a new playlist for the app, then fetch its ID value
+/**
+ * Create Playlist, then return its ID
+ * @param {}
+ * @returns {Promise} Promise object represents user's playlist id
+ */
 const createPlayList = () => new Promise((resolve, reject)=> {
     console.log("create step 1")
     window.gapi.client.youtube.playlists.insert({
@@ -231,13 +267,18 @@ const createPlayList = () => new Promise((resolve, reject)=> {
       }
     }).catch(err=>console.log(err))
   }).then((res)=>{
+
     return res.result.id
   }).catch((err)=>console.log(err))
 
 
 
 
-// Function to check if the user has playlist named 'YOURPLAYER_PLIST' and return its id if exists.
+  /**
+   * Check if the user has the playlist named YOURPLAYER_PLIST
+   * @param {array} listitem - array of user's playlists
+   * @returns {string|null} user's playlist id or null if not exists
+   */
 const checkPlaylist = (listItem) => {
   let listId = ''
   listItem.filter((item,idx) => {
@@ -246,9 +287,9 @@ const checkPlaylist = (listItem) => {
     }
     return null
   })
-  // console.log(listId, ' from action check playlist')
   return listId
 }
+
 
 export const fetchPlaylistID = (playlistId) => {
   return{
@@ -257,7 +298,11 @@ export const fetchPlaylistID = (playlistId) => {
   }
 }
 
-// Function to add the selected music to the playlist
+/**
+ * Add the selected song to the user's playlist
+ * @param {string} vId - Video ID
+ * @param {string} pId - Target Playlist ID
+ */
 export const addMusicToList = (vId, pId) => (dispatch)=> {
   const detail = {
     videoId : vId,
@@ -273,13 +318,16 @@ export const addMusicToList = (vId, pId) => (dispatch)=> {
       }
     }
   }).then(()=>{
-
     dispatch(fetchItemsFromPlaylist(pId))
   })
 
 }
 
-// Fetch Items in the Playlist
+/**
+ * Get items from the playlist
+ * @param {string} pId - Target Playlist ID
+ * @param {string} pageToken - next pageToken if exists
+ */
 export const fetchItemsFromPlaylist = (pId, pageToken) => dispatch => {
   dispatch(dataLoading(true))
   let requestOption = {
@@ -293,24 +341,30 @@ export const fetchItemsFromPlaylist = (pId, pageToken) => dispatch => {
     requestOption.pageToken = pageToken
   }
 
-  const request = window.gapi.client.youtube.playlistItems.list(requestOption)
-
-  request.execute((res)=>{
+  window.gapi.client.youtube.playlistItems.list(requestOption)
+  .then((res)=>{
 
     if(res.result){
-
-      // console.log(res)
-      // console.log(res.result)
       if(pageToken){
         dispatch(fetchMore(res, 2))
       }else{
         dispatch(dataSuccess(res, 2))
       }
     }
+    return res
+  }).then((res)=>{
+    // dispatch(dataError(false))
+    dispatch(dataLoading(false))
+  }).catch((err)=>{
+    dispatch(dataLoading(false))
+    dispatch(dataError(true))
   })
-  dispatch(dataLoading(false))
 }
 
+/**
+ * Get current repeator state
+ * @param {int} [selector : def = 1 [1 - norepeat, 2 - repeatOne, 3 - repeatAll]]
+ */
 export const playerRepeatSelector = (selector) => {
   return {
     type : 'SONG_REPEAT',
@@ -318,10 +372,45 @@ export const playerRepeatSelector = (selector) => {
   }
 }
 
+/**
+ * Remove the selected song from the playlist
+ * @param {string} songID - selected song Id (not a video ID)
+ * @param {string} pId - Target Playlist ID
+ */
 export const removeItemFromPlaylist = (songID, pId) => (dispatch) => {
   window.gapi.client.youtube.playlistItems.delete({
     id: songID
   }).then(()=>{
     dispatch(fetchItemsFromPlaylist(pId))
   })
+}
+
+
+/**
+ * Create Youtube Channel if not exists
+ * @param {int} [type : [ 1 - Open link , 2 - Find Channel ]]
+ */
+export const createChannel = (type) => (dispatch, getState) => {
+  if(type === 1){
+    // error still exists while the user is creating youtube channel, so we send errorCode 99
+    dispatch(dataError(true,99))
+    window.open("https://www.youtube.com/create_channel")
+  }
+  //the user clicks the reload button after creating the channel
+  else{
+    console.log('Finding Channel..')
+    const token = getState().userRed.token
+    const url = `https://www.googleapis.com/youtube/v3/channels?part=id,snippet&mine=true&access_token=${token}`
+    axios.get(url)
+    .then((res)=>{
+      console.log('Found Channel!')
+      dispatch(dataError(false))
+      dispatch(initPlaylistForUser())
+    }).catch((err)=>{
+      // Error can be occured if the user doesn't want to create a channel
+      if(err.response.status === 404){
+        dispatch(dataError(true,4))
+      }
+    })
+  }
 }

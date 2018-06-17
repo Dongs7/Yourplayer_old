@@ -69,7 +69,7 @@ class ResultList extends Component {
     }else {
       let dupfind = false
       find(this.props.playlistResults.items, (item) => {
-        console.log(item)
+        // console.log(item)
         if(item.snippet.resourceId.videoId === videoId){
             dupfind = true
             return
@@ -127,7 +127,8 @@ class ResultList extends Component {
             resultPageToken,
             playlistPageToken,
             userPlaylistId,
-            isLoading
+            isLoading,
+            isError
           } = this.props
     return(
       <DisplayList
@@ -151,9 +152,9 @@ class ResultList extends Component {
         handleCloseToast = { this._closeToastWindow }
         toastContents = { this.state.toastContents }
         loadPlaylist = { this._loadMorePlaylist }
-        checkPlaylistStatus = { userPlaylistId }
         totalNumberofItemsInList = { playlistTotalItems }
         isLoading = { isLoading }
+        isError = { isError }
       />
     )
   }
@@ -167,7 +168,6 @@ ResultList.defaultProps = {
 }
 
 const mapStateToProps = state => {
-  // console.log(state)
   return{
     results : state.dataFetch.results,
     resultPageToken : state.dataFetch.results.nextPageToken,
@@ -179,7 +179,8 @@ const mapStateToProps = state => {
     user_info : state.userRed,
     userPlaylistId : state.pID,
     currentSearchTerm : state.termFetch,
-    isLoading : state.dataLoading
+    isLoading : state.dataLoading,
+    isError : state.dataError
   }
 }
 

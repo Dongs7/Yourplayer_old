@@ -22,14 +22,12 @@ const persistConfig = {
   storage,
   whitelist: ['pID']
 }
-console.log(localStorage)
 const persistedReducer = persistReducer(persistConfig, rootReducers)
 
 export const store = createStore(persistedReducer,applyMiddleware(thunk))
 let persistor = persistStore(store)
 // const store = createStore(rootReducers,applyMiddleware(thunk))
 const Test =() =>{
-  console.log("loading")
   return(
   <div>
     <h2>...loading..</h2>

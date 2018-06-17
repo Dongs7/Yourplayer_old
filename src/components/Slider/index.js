@@ -1,7 +1,7 @@
 import 'rc-slider/assets/index.css'
 
 import moment from 'moment'
-import momentDuration from 'moment-duration-format'
+import momentDuration from 'moment-duration-format' // duration wont work if remove this line
 
 import React from 'react'
 import { withStyles } from '@material-ui/core/styles'

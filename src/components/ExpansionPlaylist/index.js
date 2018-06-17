@@ -32,8 +32,7 @@ const styles = theme => ({
 })
 
 const ExpansionPlaylist = (props) => {
-  const { classes, user, plistId, playlistCreator, isLoading } = props
-  // console.log(plistId , ' from EXPANSIONLIST')
+  const { classes, user, isError,createChannel, createButtonState } = props
   return(
     <div className={classes.root}>
       <ExpansionPanel expanded className={classes.panel_root}>
@@ -64,12 +63,28 @@ const ExpansionPlaylist = (props) => {
         <ExpansionPanelActions>
             {
               user  ?
-                isLoading ?
-                <Button size="small" color="primary" variant="raised"> Loading playlist... </Button>
+                isError.isError  === true?
+                  isError.errMsg === 4 || isError.errMsg === 99?
+                  <Button
+                      size="large"
+                      variant="raised"
+                      onClick={
+                        createButtonState ?
+                        ()=>createChannel(2)
+                        :
+                        ()=>createChannel(1)
+                      }>
+                    {
+                      createButtonState ?
+                      `Reload your playlist`
+                      :
+                      `Create Youtube Channel`
+                    }
+                  </Button>
+                  :
+                  <Button size="large" variant="raised">Error other than 4</Button>
                 :
-                plistId !== '' ? <Button size="small" color="primary" variant="raised" onClick={playlistCreator}> Reload Playlist </Button>
-                :
-                <Button size="small" color="primary" variant="raised" onClick={playlistCreator}> Solve Playlist issues </Button>
+                <Button size="large" variant="outlined" >No error</Button>
               :
               ''
             }
