@@ -22,18 +22,23 @@ Simple Music Player utilizing
 
 # Features to be updated / fixed / added
 
-- Skip tracks and repeat all songs only work when the playlist is available
-- Shuffle songs
+- ~~Shuffle songs~~
 - Better IOS support
 - ~~Text styles for search results~~
 - Volume control, ~~slider bar control~~
 - ~~No duplicate in the playlist~~
-- button to show more results (pagetoken)
+- ~~button to show more results (pagetoken)~~
 - marquee for long text
-- close playlist sidemenu after selecting the song (mobile)
+- ~~close playlist sidemenu after selecting the song (mobile)~~ (added close btn instead)
+
 # Update #1
 - add song in the playlist if the song is not in the list
 - seek currently playing song using slider bar
 - improved UI
 - 1.1 Fixed : unable to show track title when clicking prev, next skip button
 - 1.2 Fixed : unable to rotate tracks automatically when repeat-all is activated
+
+# Update #2
+- pulse icon while playing
+- fixed song duration format
+- fixed minor auth issues
