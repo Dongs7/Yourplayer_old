@@ -28,7 +28,6 @@ Simple Music Player utilizing
 - Volume control, ~~slider bar control~~
 - ~~No duplicate in the playlist~~
 - ~~button to show more results (pagetoken)~~
-- marquee for long text
 - ~~close playlist sidemenu after selecting the song (mobile)~~ (added close btn instead)
 
 # Update #1
@@ -42,3 +41,6 @@ Simple Music Player utilizing
 - pulse icon while playing
 - fixed song duration format
 - fixed minor auth issues
+
+# Update #3
+- Better error handling & display
