@@ -1,6 +1,6 @@
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
-[YourPlayer Demo site](https://yourplayer.herokuapp.com)
+~~[YourPlayer Demo site](https://yourplayer.herokuapp.com)~~
 
 ## Music Player with YouTube Data API
 
